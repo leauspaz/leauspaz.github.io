@@ -1,142 +1,97 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Terminal Lingo</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-<!-- ============================================================
-     TOP BAR
-     ============================================================ -->
+<!-- TOP BAR -->
 <div id="topbar">
 
-  <!-- Logo -->
-  <a class="logo" href="#">
-    <span class="logo-dot"></span>
-    Terminal Lingo
-  </a>
+  <div class="tb-group">
+    <a class="logo" href="#">
+      <span class="logo-dot"></span>Terminal Lingo
+    </a>
+    <div class="bar-sep"></div>
+    <span class="bar-label">Lang</span>
+    <select class="bar-select" id="lang-sel"><option value="All">All</option></select>
+    <div class="bar-sep"></div>
+    <span class="bar-label">Level</span>
+    <select class="bar-select" id="level-sel">
+      <option value="All">All</option>
+      <option value="A1">A1</option><option value="A2">A2</option>
+      <option value="B1">B1</option><option value="B2">B2</option>
+      <option value="C1">C1</option><option value="C2">C2</option>
+    </select>
+  </div>
 
-  <div class="bar-sep"></div>
+  <div class="tb-spacer"></div>
 
-  <!-- Language -->
-  <span class="bar-label">Lang</span>
-  <select class="bar-select" id="lang-sel">
-    <option value="All">All</option>
-  </select>
+  <div class="tb-group">
+    <a class="bar-text-btn bmc" href="https://buymeacoffee.com/leauspaz" target="_blank" rel="noopener">☕ BMC</a>
+    <button class="bar-text-btn" id="upload-btn">
+      <svg style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      CSV
+    </button>
+    <div class="bar-sep"></div>
+    <button class="bar-btn" id="mute-btn" title="Sound on/off">
+      <svg id="mute-icon" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    </button>
+    <button class="bar-btn" id="streamer-btn" title="Streamer / Creator Mode">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    </button>
+    <button class="bar-btn" id="settings-btn" title="Settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</div>
 
-  <div class="bar-sep"></div>
-
-  <!-- Level -->
-  <span class="bar-label">Level</span>
-  <select class="bar-select" id="level-sel">
-    <option value="All">All</option>
-    <option value="A1">A1</option>
-    <option value="A2">A2</option>
-    <option value="B1">B1</option>
-    <option value="B2">B2</option>
-    <option value="C1">C1</option>
-    <option value="C2">C2</option>
-  </select>
-
-  <div class="bar-sep"></div>
-
-  <!-- Count -->
-  <span class="bar-label">Cards</span>
-  <select class="bar-select" id="count-sel">
-    <option value="1">1</option>
-    <option value="2">2</option>
-    <option value="3">3</option>
-  </select>
-
-  <div class="bar-sep"></div>
-
-  <!-- Mute -->
-  <button class="bar-btn" id="mute-btn" title="Mute / Unmute">
-    <svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-  </button>
-
-  <!-- Creator / Presentation -->
-  <button class="bar-btn" id="creator-btn" title="Creator / Presentation Mode">
-    <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-  </button>
-
-  <div class="bar-sep"></div>
-
-  <!-- Settings -->
-  <button class="bar-btn" id="settings-btn" title="Settings">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-  </button>
-
-  <!-- Upload -->
-  <button class="bar-text-btn" id="upload-btn" title="Upload CSV">
-    <svg style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    CSV
-  </button>
-
-  <!-- Buy Me a Coffee -->
-  <a class="bar-text-btn bmc" href="https://buymeacoffee.com/leauspaz" target="_blank" rel="noopener">
-    ☕ BMC
-  </a>
-
-</div><!-- /topbar -->
-
-
-<!-- ============================================================
-     MAIN
-     ============================================================ -->
+<!-- MAIN -->
 <div id="main">
 
-  <!-- Category chips -->
+  <!-- Category chips (hidden in streamer mode) -->
   <div id="filter-bar">
     <span class="filter-label">Category</span>
     <div id="cat-chips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
   </div>
 
-  <!-- Stats -->
-  <div id="stats-bar">
-    <span id="stats-text"></span>
-  </div>
+  <!-- Stats (hidden in streamer mode) -->
+  <div id="stats-bar"><span id="stats-text"></span></div>
 
-  <!-- Cards grid -->
+  <!-- Card -->
   <div id="cards-grid"></div>
-
-  <!-- Empty state -->
   <div id="empty-state">No sentences match your filters.</div>
 
-  <!-- Controls row (shown in creator mode) -->
-  <div id="controls-row" style="display:none;">
+  <!-- Controls (streamer mode only) -->
+  <div id="controls-row">
     <button class="ctrl-btn primary" id="next-btn">
       <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      Next batch
+      Next
     </button>
     <button class="ctrl-btn" id="reveal-btn">
       <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      Reveal all
+      Reveal <span class="ctrl-shortcut" id="reveal-shortcut-label">R</span>
     </button>
     <button class="ctrl-btn" id="flip-btn">
       <svg viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
-      <span class="flip-label">EN → Target</span>
+      <span id="flip-label">EN → Target</span>
     </button>
-    <button class="ctrl-btn" id="pres-enter-btn" style="display:none" id="pres-enter-btn2">
+    <button class="ctrl-btn" id="pres-enter-btn">
       <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
       Present
     </button>
   </div>
 
-</div><!-- /main -->
+</div>
 
-
-<!-- ============================================================
-     PRESENTATION MODE
-     ============================================================ -->
+<!-- PRESENTATION MODE -->
 <div id="presentation-mode">
   <div class="pres-meta" id="pres-meta"></div>
   <div class="pres-primary" id="pres-primary"></div>
   <div class="pres-secondary hidden" id="pres-secondary"></div>
-
   <div class="pres-controls">
     <button class="ctrl-btn" id="pres-prev-btn">
       <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -148,19 +103,15 @@
     <button class="ctrl-btn" id="pres-next-btn">
       <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </button>
-    <button class="ctrl-btn" id="mirror-btn" title="Mirror text">
+    <button class="ctrl-btn" id="mirror-btn" title="Mirror">
       <svg viewBox="0 0 24 24"><path d="M12 3v18M3 7l4 5-4 5M21 7l-4 5 4 5"/></svg>
     </button>
     <button class="ctrl-btn" id="pres-exit-btn">✕ Exit</button>
   </div>
-
   <div class="pres-progress"><div class="pres-progress-bar" id="pres-progress-bar" style="width:0%"></div></div>
 </div>
 
-
-<!-- ============================================================
-     SETTINGS OVERLAY
-     ============================================================ -->
+<!-- SETTINGS OVERLAY -->
 <div id="settings-overlay">
   <div id="settings-panel">
     <div class="settings-title">
@@ -168,83 +119,68 @@
       <button class="settings-close" id="settings-close">✕</button>
     </div>
 
-    <!-- Theme -->
+    <!-- Themes: Dark -->
     <div class="settings-section">
-      <div class="settings-section-label">Theme</div>
-      <div class="theme-grid">
-        <button class="theme-swatch active" data-theme="terminal">
-          <span class="swatch-dot" style="background:#e7ff00"></span>
-          Terminal Green
-        </button>
-        <button class="theme-swatch" data-theme="amber">
-          <span class="swatch-dot" style="background:#ffb300"></span>
-          Amber
-        </button>
-        <button class="theme-swatch" data-theme="arctic">
-          <span class="swatch-dot" style="background:#4fc3f7"></span>
-          Arctic Blue
-        </button>
-        <button class="theme-swatch" data-theme="rose">
-          <span class="swatch-dot" style="background:#f48fb1"></span>
-          Rose Gold
-        </button>
-        <button class="theme-swatch" data-theme="obsidian">
-          <span class="swatch-dot" style="background:#bf5af2"></span>
-          Obsidian
-        </button>
-        <button class="theme-swatch" data-theme="ivory">
-          <span class="swatch-dot" style="background:#8b4513"></span>
-          Ivory
-        </button>
+      <div class="settings-section-label">Theme — Dark</div>
+      <div class="theme-dots" id="theme-dots-dark">
+        <span class="theme-dot active" data-theme="terminal" style="background:#e7ff00" title="Terminal Green"></span>
+        <span class="theme-dot" data-theme="amber"   style="background:#ffb300" title="Amber"></span>
+        <span class="theme-dot" data-theme="arctic"  style="background:#4fc3f7" title="Arctic Blue"></span>
+        <span class="theme-dot" data-theme="rose"    style="background:#f48fb1" title="Rose Gold"></span>
+        <span class="theme-dot" data-theme="obsidian"style="background:#bf5af2" title="Obsidian"></span>
+        <span class="theme-dot" data-theme="forest"  style="background:#50e070" title="Forest"></span>
+        <span class="theme-dot" data-theme="steel"   style="background:#7090e8" title="Steel"></span>
+        <span class="theme-dot" data-theme="chalk"   style="background:#89b4fa" title="Chalk"></span>
+        <span class="theme-dot" data-theme="mocha"   style="background:#e78a4e" title="Mocha"></span>
+      </div>
+      <div class="settings-section-label" style="margin-top:10px">Theme — Light</div>
+      <div class="theme-dots" id="theme-dots-light">
+        <span class="theme-dot" data-theme="ivory" style="background:#8b4513" title="Ivory"></span>
+        <span class="theme-dot" data-theme="paper" style="background:#c0392b" title="Paper"></span>
       </div>
     </div>
 
-    <!-- Font size: English / Primary -->
+    <!-- Font Size -->
     <div class="settings-section">
-      <div class="settings-section-label">Font size — English / Primary</div>
-      <div class="size-row" id="font-size-primary">
-        <button class="size-btn active" data-size="default">Default</button>
-        <button class="size-btn" data-size="sm">S</button>
-        <button class="size-btn" data-size="md">M</button>
-        <button class="size-btn" data-size="lg">L</button>
-        <button class="size-btn" data-size="xl">XL</button>
+      <div class="settings-section-label">FONT SIZE — PRIMARY</div>
+      <div class="fs-row" id="fs-btns">
+        <button class="fs-btn active" data-fs="18">18</button>
+        <button class="fs-btn" data-fs="14">14</button>
+        <button class="fs-btn" data-fs="16">16</button>
+        <button class="fs-btn" data-fs="20">20</button>
+        <button class="fs-btn" data-fs="24">24</button>
+        <button class="fs-btn" data-fs="28">28</button>
+        <button class="fs-btn" data-fs="32">32</button>
       </div>
-    </div>
-
-    <!-- Font size: Translation / Secondary -->
-    <div class="settings-section">
-      <div class="settings-section-label">Font size — Translation</div>
-      <div class="size-row" id="font-size-secondary">
-        <button class="size-btn active" data-size="default">Default</button>
-        <button class="size-btn" data-size="sm">S</button>
-        <button class="size-btn" data-size="md">M</button>
-        <button class="size-btn" data-size="lg">L</button>
-        <button class="size-btn" data-size="xl">XL</button>
+      <div class="fs-custom-row">
+        <input class="fs-custom-input" id="fs-custom-input" type="number" min="8" max="72" placeholder="px" />
+        <span class="fs-custom-label">Custom px</span>
       </div>
     </div>
 
     <!-- Keyboard shortcuts -->
     <div class="settings-section">
-      <div class="settings-section-label">Keyboard shortcuts</div>
+      <div class="settings-section-label">Keyboard Shortcuts</div>
       <div class="key-row">
-        <span class="key-label">Reveal all / Flip card</span>
-        <input class="key-input" id="key-reveal-input" value="R" maxlength="10" readonly />
+        <span class="key-label">Reveal card</span>
+        <input class="key-input" id="key-reveal-input" value="R" maxlength="10" readonly/>
       </div>
       <div style="height:8px"></div>
       <div class="key-row">
-        <span class="key-label">Next / Advance</span>
-        <input class="key-input" id="key-next-input" value="Space" maxlength="10" readonly />
+        <span class="key-label">Next card</span>
+        <input class="key-input" id="key-next-input" value="Space" maxlength="10" readonly/>
       </div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-top:6px;">Click a field then press any key to remap.</div>
+      <div class="key-row" style="margin-top:8px">
+        <span class="key-label">Play TTS</span>
+        <input class="key-input" id="key-tts-input" value="T" maxlength="10" readonly/>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-top:8px">Click a field then press any key to remap.</div>
     </div>
 
   </div>
 </div>
 
-
-<!-- ============================================================
-     UPLOAD OVERLAY
-     ============================================================ -->
+<!-- UPLOAD OVERLAY -->
 <div id="upload-overlay">
   <div id="upload-panel">
     <div class="upload-title">
@@ -256,26 +192,23 @@
       <code>language, level, english, translation, category</code><br><br>
       · <code>level</code>: A1 A2 B1 B2 C1 C2<br>
       · <code>category</code>: any string (auto-detected)<br>
-      · UTF-8 encoding · commas in cells must be quoted
+      · UTF-8 · wrap comma-containing cells in quotes
     </div>
     <div class="upload-drop" id="upload-drop">
       Drop CSV here or click to browse
-      <input type="file" id="upload-file-input" accept=".csv" style="display:none" />
+      <input type="file" id="upload-file-input" accept=".csv" style="display:none"/>
     </div>
     <div class="upload-status" id="upload-status"></div>
   </div>
 </div>
 
-
-<!-- ============================================================
-     KEYBOARD HINTS
-     ============================================================ -->
+<!-- KEY HINTS -->
 <div id="key-hints">
   <span class="key-hint-item"><span class="key-hint-key" id="hint-reveal-key">R</span> reveal</span>
   <span class="key-hint-item"><span class="key-hint-key" id="hint-next-key">Space</span> next</span>
+  <span class="key-hint-item"><span class="key-hint-key" id="hint-tts-key">T</span> speak</span>
   <span class="key-hint-item"><span class="key-hint-key">Esc</span> close</span>
 </div>
-
 
 <script src="app.js"></script>
 </body>

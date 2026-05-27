@@ -1,112 +1,100 @@
-/* ============================================================
-   TERMINAL LINGO — app.js
-   ============================================================ */
-
 'use strict';
 
-// ---------- State ----------
+/* ── State ─────────────────────────────────────────────────── */
 const S = {
-  allRows:       [],
-  filtered:      [],
-  deck:          [],
-  deckIndex:     0,
-  languages:     [],
-  categories:    [],
-  lang:          'All',
-  level:         'All',
-  count:         1,
+  allRows:        [],
+  filtered:       [],
+  current:        null,   // single card row
+  languages:      [],
+  categories:     [],
+  lang:           'All',
+  level:          'All',
   categories_sel: ['All'],
-  muted:         false,
-  creatorMode:   false,
-  creatorFlip:   false,   // false = EN→Target, true = Target→EN
-  presMode:      false,
-  presIndex:     0,
-  presRevealed:  false,
-  theme:         'terminal',
-  fontSizePrimary:     'default',
-  fontSizeSecondary:   'default',
-  keyReveal:     'r',
-  keyNext:       ' ',
-  revealedCards: new Set(),
+  muted:          false,
+  streamerMode:   false,
+  creatorFlip:    false,  // false = EN→Target, true = Target→EN
+  revealed:       false,
+  presMode:       false,
+  presPool:       [],
+  presIndex:      0,
+  presRevealed:   false,
+  theme:          'terminal',
+  fontSize:       18,     // px number
+  keyReveal:      'r',
+  keyNext:        ' ',
+  keyTTS:         't',
 };
 
-// ---------- DOM refs ----------
-const $ = id => document.getElementById(id);
+/* ── DOM ────────────────────────────────────────────────────── */
+const $  = id  => document.getElementById(id);
 const $$ = sel => document.querySelectorAll(sel);
 
-// ---------- Scramble chars ----------
-const SCRAMBLE = 'αβγδεζηθλμνξπρστυφχψωΔΣΩ '.split('');
+/* ── Scramble ───────────────────────────────────────────────── */
+const CHARS = 'αβγδεζηθλμνξπρστυφχψωΔΣΩ'.split('');
 function scrambleTick(el, target, frame, total, cb) {
-  if (frame >= total) { el.textContent = target; if (cb) cb(); return; }
-  el.textContent = target.split('').map((ch, i) => {
-    if (i < Math.floor((frame / total) * target.length)) return ch;
-    return ch === ' ' ? ' ' : SCRAMBLE[Math.floor(Math.random() * SCRAMBLE.length)];
-  }).join('');
+  if (frame >= total) { el.textContent = target; cb && cb(); return; }
+  el.textContent = target.split('').map((ch, i) =>
+    i < Math.floor((frame / total) * target.length)
+      ? ch
+      : ch === ' ' ? ' ' : CHARS[Math.floor(Math.random() * CHARS.length)]
+  ).join('');
   requestAnimationFrame(() => scrambleTick(el, target, frame + 1, total, cb));
 }
-function scramble(el, target, duration = 400, cb) {
-  const frames = Math.round(duration / 16);
+function scramble(el, text, ms = 380, cb) {
   el.classList.add('scrambling');
-  scrambleTick(el, target, 0, frames, () => {
+  scrambleTick(el, text, 0, Math.round(ms / 16), () => {
     el.classList.remove('scrambling');
-    if (cb) cb();
+    cb && cb();
   });
 }
 
-// ---------- CSV Parser ----------
+/* ── CSV ────────────────────────────────────────────────────── */
+function splitCSV(line) {
+  const r = []; let cur = '', q = false;
+  for (const ch of line) {
+    if (ch === '"') { q = !q; }
+    else if (ch === ',' && !q) { r.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  r.push(cur);
+  return r;
+}
 function parseCSV(text) {
   const lines = text.trim().split('\n');
-  const header = lines[0].split(',').map(h => h.trim().toLowerCase());
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cols = splitCSVLine(lines[i]);
-    if (cols.length < 5) continue;
-    const row = {};
-    header.forEach((h, idx) => { row[h] = (cols[idx] || '').trim().replace(/^"|"$/g, '').trim(); });
-    if (row.language && row.level && row.english && row.translation && row.category) {
-      rows.push(row);
-    }
-  }
-  return rows;
-}
-function splitCSVLine(line) {
-  const result = [];
-  let cur = '', inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') { inQ = !inQ; }
-    else if (ch === ',' && !inQ) { result.push(cur); cur = ''; }
-    else { cur += ch; }
-  }
-  result.push(cur);
-  return result;
+  const hdr   = lines[0].split(',').map(h => h.trim().toLowerCase());
+  return lines.slice(1).map(l => {
+    const cols = splitCSV(l);
+    const row  = {};
+    hdr.forEach((h, i) => row[h] = (cols[i] || '').trim().replace(/^"|"$/g, '').trim());
+    return row;
+  }).filter(r => r.language && r.level && r.english && r.translation && r.category);
 }
 
-// ---------- Load default CSV ----------
+/* ── Load default CSV ──────────────────────────────────────── */
 async function loadDefaultCSV() {
   try {
-    const res = await fetch('data/sentences.csv');
+    const res  = await fetch('data/sentences.csv');
     const text = await res.text();
-    S.allRows = parseCSV(text);
+    S.allRows  = parseCSV(text);
     init();
   } catch (e) {
-    $('empty-state').textContent = 'Could not load sentences.csv — check the data/ folder.';
+    $('empty-state').textContent = 'Could not load data/sentences.csv';
     $('empty-state').classList.add('active');
   }
 }
 
-// ---------- Init ----------
+/* ── Init ───────────────────────────────────────────────────── */
 function init() {
-  buildLanguageOptions();
+  buildLangOptions();
   buildCategoryChips();
   applyFilters();
-  renderDeck();
-  attachEvents();
+  nextCard();
   loadSettings();
+  attachEvents();
 }
 
-function buildLanguageOptions() {
-  S.languages = ['All', ...new Set(S.allRows.map(r => r.language))].filter(Boolean);
+function buildLangOptions() {
+  S.languages = ['All', ...new Set(S.allRows.map(r => r.language))];
   const sel = $('lang-sel');
   sel.innerHTML = S.languages.map(l => `<option value="${l}">${l}</option>`).join('');
   sel.value = S.lang;
@@ -117,330 +105,294 @@ function buildCategoryChips() {
   const bar = $('cat-chips');
   bar.innerHTML = `<button class="chip active" data-cat="All">All</button>`;
   S.categories.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = 'chip';
-    btn.dataset.cat = cat;
-    btn.textContent = cat;
-    bar.appendChild(btn);
+    const b = document.createElement('button');
+    b.className = 'chip'; b.dataset.cat = cat; b.textContent = cat;
+    bar.appendChild(b);
   });
-  bar.querySelectorAll('.chip').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const cat = btn.dataset.cat;
-      if (cat === 'All') {
-        S.categories_sel = ['All'];
-      } else {
-        S.categories_sel = S.categories_sel.filter(c => c !== 'All');
-        if (S.categories_sel.includes(cat)) {
-          S.categories_sel = S.categories_sel.filter(c => c !== cat);
-          if (S.categories_sel.length === 0) S.categories_sel = ['All'];
-        } else {
-          S.categories_sel.push(cat);
-        }
-      }
-      syncCategoryChips();
-      applyFilters();
-      renderDeck();
-    });
-  });
+  bar.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => {
+    const cat = b.dataset.cat;
+    if (cat === 'All') { S.categories_sel = ['All']; }
+    else {
+      S.categories_sel = S.categories_sel.filter(c => c !== 'All');
+      if (S.categories_sel.includes(cat))
+        S.categories_sel = S.categories_sel.filter(c => c !== cat);
+      else S.categories_sel.push(cat);
+      if (!S.categories_sel.length) S.categories_sel = ['All'];
+    }
+    syncChips();
+    applyFilters();
+    nextCard();
+  }));
 }
 
-function syncCategoryChips() {
-  $$('#cat-chips .chip').forEach(btn => {
-    btn.classList.toggle('active',
-      S.categories_sel.includes('All') ? btn.dataset.cat === 'All' : S.categories_sel.includes(btn.dataset.cat)
-    );
-  });
+function syncChips() {
+  $$('#cat-chips .chip').forEach(b =>
+    b.classList.toggle('active',
+      S.categories_sel.includes('All') ? b.dataset.cat === 'All' : S.categories_sel.includes(b.dataset.cat)
+    )
+  );
 }
 
 function applyFilters() {
-  let rows = S.allRows;
-  if (S.lang !== 'All') rows = rows.filter(r => r.language === S.lang);
-  if (S.level !== 'All') rows = rows.filter(r => r.level === S.level);
-  if (!S.categories_sel.includes('All')) {
-    rows = rows.filter(r => S.categories_sel.includes(r.category));
-  }
-  S.filtered = rows;
+  let r = S.allRows;
+  if (S.lang  !== 'All') r = r.filter(x => x.language === S.lang);
+  if (S.level !== 'All') r = r.filter(x => x.level    === S.level);
+  if (!S.categories_sel.includes('All'))
+    r = r.filter(x => S.categories_sel.includes(x.category));
+  S.filtered = r;
   updateStats();
 }
 
 function updateStats() {
-  const el = $('stats-text');
-  if (el) el.innerHTML = `<span>${S.filtered.length}</span> sentences &nbsp;·&nbsp; <span>${new Set(S.filtered.map(r => r.category)).size}</span> categories`;
+  $('stats-text').innerHTML =
+    `<span>${S.filtered.length}</span> sentences &nbsp;·&nbsp; <span>${new Set(S.filtered.map(r => r.category)).size}</span> categories`;
 }
 
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
+function shuffle(a) {
+  const b = [...a];
+  for (let i = b.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+    [b[i], b[j]] = [b[j], b[i]];
   }
-  return a;
+  return b;
 }
 
-function renderDeck() {
-  S.revealedCards.clear();
-  if (S.filtered.length === 0) {
+/* ── Card ───────────────────────────────────────────────────── */
+function nextCard() {
+  if (!S.filtered.length) {
     $('cards-grid').innerHTML = '';
     $('empty-state').classList.add('active');
     return;
   }
   $('empty-state').classList.remove('active');
-  const pool = shuffle(S.filtered);
-  S.deck = pool.slice(0, S.count);
-  buildCards();
-
-  if (S.presMode) {
-    S.presIndex = 0;
-    S.presRevealed = false;
-    renderPresCard();
-  }
+  S.current  = S.filtered[Math.floor(Math.random() * S.filtered.length)];
+  S.revealed = false;
+  renderCard();
 }
 
-function buildCards() {
+function renderCard() {
+  const row  = S.current;
   const grid = $('cards-grid');
-  grid.innerHTML = '';
-  S.deck.forEach((row, idx) => {
-    const card = makeCard(row, idx);
-    grid.appendChild(card);
-  });
-}
 
-function makeCard(row, idx) {
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.dataset.idx = idx;
+  const primary   = S.creatorFlip ? row.translation : row.english;
+  const secondary = S.creatorFlip ? row.english      : row.translation;
 
-  const primaryText = S.creatorFlip ? row.translation : row.english;
-  const secondaryText = S.creatorFlip ? row.english : row.translation;
+  // font size class
+  const knownSizes = [14,16,18,20,24,28,32];
+  const fsClass    = knownSizes.includes(S.fontSize)
+    ? `fs-${S.fontSize}`
+    : 'fs-custom';
+  const fsStyle    = fsClass === 'fs-custom'
+    ? `style="--custom-fs:${S.fontSize}px"`
+    : '';
 
-  card.innerHTML = `
-    <div class="card-meta">
-      <span class="card-level">${row.level}</span>
-      <span class="card-cat">${row.category}</span>
-      <span class="card-lang">${row.language}</span>
-    </div>
-    <div class="card-primary font-${S.fontSizePrimary}">${primaryText}</div>
-    <div class="card-secondary font-${S.fontSizeSecondary} hidden">&nbsp;</div>
-    <div class="card-hint">${S.creatorMode ? 'click to reveal' : ''}</div>
-    <button class="card-tts" title="Speak translation" data-text="${secondaryText.replace(/"/g, '&quot;')}" data-lang="${row.language}">
-      <svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-    </button>
-  `;
+  grid.innerHTML = `
+    <div class="card ${fsClass}" ${fsStyle} id="main-card">
+      <div class="card-meta">
+        <span class="card-level">${row.level}</span>
+        <span class="card-cat">${row.category}</span>
+        <span class="card-lang">${row.language}</span>
+      </div>
+      <div class="card-primary" id="card-primary">${escHtml(primary)}</div>
+      <div class="card-secondary hidden" id="card-secondary">&nbsp;</div>
+      <div class="card-hint" id="card-hint">${S.streamerMode ? 'click · or press key to reveal' : ''}</div>
+      <button class="card-tts" id="card-tts-btn" title="Speak translation">
+        <svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
+    </div>`;
 
-  if (!S.creatorMode) {
-    // In browse mode, show translation immediately (scrambled in)
-    const secEl = card.querySelector('.card-secondary');
-    secEl.classList.remove('hidden');
-    scramble(secEl, secondaryText, 350);
-  }
-
-  card.addEventListener('click', (e) => {
-    if (e.target.closest('.card-tts')) return;
-    if (S.creatorMode) toggleReveal(card, idx, secondaryText);
-  });
-
-  card.querySelector('.card-tts').addEventListener('click', (e) => {
-    e.stopPropagation();
-    speak(secondaryText, row.language);
-  });
-
-  return card;
-}
-
-function toggleReveal(card, idx, secondaryText) {
-  const sec = card.querySelector('.card-secondary');
-  const hint = card.querySelector('.card-hint');
-  if (S.revealedCards.has(idx)) {
-    // hide
-    S.revealedCards.delete(idx);
-    card.classList.remove('revealed');
-    sec.classList.add('hidden');
-    sec.textContent = '\u00a0';
-    hint.textContent = 'click to reveal';
-  } else {
-    // reveal
-    S.revealedCards.add(idx);
-    card.classList.add('revealed');
+  // In normal (non-streamer) mode: show translation immediately, scrambled in
+  if (!S.streamerMode) {
+    const sec = $('card-secondary');
     sec.classList.remove('hidden');
-    scramble(sec, secondaryText, 380);
-    hint.textContent = '';
+    scramble(sec, secondary, 380);
   }
-}
 
-function revealAll() {
-  S.deck.forEach((row, idx) => {
-    const card = document.querySelector(`.card[data-idx="${idx}"]`);
-    if (!card) return;
-    const secondaryText = S.creatorFlip ? row.english : row.translation;
-    const sec = card.querySelector('.card-secondary');
-    const hint = card.querySelector('.card-hint');
-    if (!S.revealedCards.has(idx)) {
-      S.revealedCards.add(idx);
-      card.classList.add('revealed');
-      sec.classList.remove('hidden');
-      scramble(sec, secondaryText, 380);
-      hint.textContent = '';
-    }
+  $('main-card').addEventListener('click', e => {
+    if (e.target.closest('#card-tts-btn')) return;
+    if (S.streamerMode) revealCard();
+  });
+
+  $('card-tts-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    speakCurrent();
   });
 }
 
-// ---------- TTS ----------
+function revealCard() {
+  if (S.revealed) return;
+  S.revealed = true;
+  const row       = S.current;
+  const secondary = S.creatorFlip ? row.english : row.translation;
+  const sec       = $('card-secondary');
+  const hint      = $('card-hint');
+  const card      = $('main-card');
+  sec.classList.remove('hidden');
+  scramble(sec, secondary, 380, () => {
+    if (!S.muted) speak(secondary, row.language);
+  });
+  card.classList.add('revealed');
+  hint.textContent = '';
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── TTS ────────────────────────────────────────────────────── */
+const LANG_MAP = { German:'de-DE', French:'fr-FR', Polish:'pl-PL', Spanish:'es-ES', Italian:'it-IT', Japanese:'ja-JP' };
 function speak(text, lang) {
-  if (S.muted) return;
   if (!window.speechSynthesis) return;
   speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  // Map language to BCP-47
-  const langMap = { German: 'de-DE', French: 'fr-FR', Polish: 'pl-PL', Spanish: 'es-ES', Italian: 'it-IT', Japanese: 'ja-JP' };
-  utt.lang = langMap[lang] || 'de-DE';
-  speechSynthesis.speak(utt);
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang  = LANG_MAP[lang] || 'de-DE';
+  speechSynthesis.speak(u);
+}
+function speakCurrent() {
+  if (S.muted || !S.current) return;
+  const row  = S.current;
+  const text = S.creatorFlip ? row.english : row.translation;
+  speak(text, row.language);
 }
 
-// ---------- Presentation Mode ----------
-function enterPresMode() {
-  S.presMode = true;
-  S.presIndex = 0;
+/* ── Streamer mode ──────────────────────────────────────────── */
+function setStreamerMode(on) {
+  S.streamerMode = on;
+  $('streamer-btn').classList.toggle('active', on);
+  // hide/show topbar non-essential items
+  const hideInStreamer = ['lang-sel','level-sel','filter-bar','stats-bar'];
+  hideInStreamer.forEach(id => {
+    const el = $(id); if (el) el.classList.toggle('streamer-hidden', on);
+  });
+  // hide bar-labels too
+  $$('.bar-label').forEach(el => el.classList.toggle('streamer-hidden', on));
+  // show/hide controls row
+  $('controls-row').style.display = on ? 'flex' : 'none';
+  // re-render card with/without auto-reveal
+  S.revealed = false;
+  renderCard();
+}
+
+/* ── Presentation mode ──────────────────────────────────────── */
+function enterPres() {
+  S.presPool    = shuffle(S.filtered);
+  S.presIndex   = 0;
   S.presRevealed = false;
+  S.presMode    = true;
   $('presentation-mode').classList.add('active');
   renderPresCard();
-  $('creator-btn').classList.add('active');
 }
-function exitPresMode() {
+function exitPres() {
   S.presMode = false;
   $('presentation-mode').classList.remove('active');
-  $('creator-btn').classList.remove('active');
 }
 function renderPresCard() {
-  if (S.deck.length === 0) return;
-  const row = S.deck[S.presIndex % S.deck.length];
-  const primaryText = S.creatorFlip ? row.translation : row.english;
-  const secondaryText = S.creatorFlip ? row.english : row.translation;
-
-  const pPrim = $('pres-primary');
-  const pSec  = $('pres-secondary');
-  const pMeta = $('pres-meta');
-  const pProg = $('pres-progress-bar');
-
-  pMeta.innerHTML = `<span class="pres-level">${row.level}</span><span>${row.category}</span><span>${row.language}</span>`;
-  scramble(pPrim, primaryText, 400);
+  if (!S.presPool.length) return;
+  const row       = S.presPool[S.presIndex % S.presPool.length];
+  const primary   = S.creatorFlip ? row.translation : row.english;
+  const secondary = S.creatorFlip ? row.english      : row.translation;
+  const pPrim = $('pres-primary'), pSec = $('pres-secondary');
+  $('pres-meta').innerHTML = `<span class="pres-level">${row.level}</span><span>${row.category}</span><span>${row.language}</span>`;
+  scramble(pPrim, primary, 400);
   pSec.classList.add('hidden');
-  pSec.textContent = secondaryText;
+  pSec.textContent = secondary;
   S.presRevealed = false;
-
-  const pct = ((S.presIndex + 1) / S.deck.length) * 100;
-  pProg.style.width = pct + '%';
-
-  // font sizes
-  pPrim.className = 'pres-primary';
-  if (S.fontSizePrimary !== 'default') pPrim.classList.add('font-' + S.fontSizePrimary);
-  pSec.className = 'pres-secondary hidden';
-  if (S.fontSizeSecondary !== 'default') pSec.classList.add('font-' + S.fontSizeSecondary);
-  if ($('mirror-btn').classList.contains('active')) {
-    pPrim.classList.add('pres-mirrored');
-    pSec.classList.add('pres-mirrored');
-  }
+  $('pres-progress-bar').style.width = ((S.presIndex + 1) / S.presPool.length * 100) + '%';
+  const mirrored = $('mirror-btn').classList.contains('active');
+  pPrim.classList.toggle('pres-mirrored', mirrored);
+  pSec.classList.toggle('pres-mirrored', mirrored);
 }
 function presReveal() {
   if (S.presRevealed) return;
-  const pSec = $('pres-secondary');
-  pSec.classList.remove('hidden');
   S.presRevealed = true;
-  const row = S.deck[S.presIndex % S.deck.length];
-  const secondaryText = S.creatorFlip ? row.english : row.translation;
-  scramble(pSec, secondaryText, 380);
-  if (!S.muted) speak(secondaryText, row.language);
+  const row       = S.presPool[S.presIndex % S.presPool.length];
+  const secondary = S.creatorFlip ? row.english : row.translation;
+  const pSec      = $('pres-secondary');
+  pSec.classList.remove('hidden');
+  scramble(pSec, secondary, 380, () => {
+    if (!S.muted) speak(secondary, row.language);
+  });
 }
 function presNext() {
-  S.presIndex = (S.presIndex + 1) % S.deck.length;
+  S.presIndex = (S.presIndex + 1) % S.presPool.length;
   S.presRevealed = false;
   renderPresCard();
 }
 
-// ---------- Settings ----------
-function openSettings() { $('settings-overlay').classList.add('active'); }
-function closeSettings() { $('settings-overlay').classList.remove('active'); }
-
+/* ── Settings persist ───────────────────────────────────────── */
 function loadSettings() {
   try {
-    const saved = JSON.parse(localStorage.getItem('tl_settings') || '{}');
-    if (saved.theme) setTheme(saved.theme);
-    if (saved.fontSizePrimary) setFontSize('primary', saved.fontSizePrimary);
-    if (saved.fontSizeSecondary) setFontSize('secondary', saved.fontSizeSecondary);
-    if (saved.keyReveal) S.keyReveal = saved.keyReveal;
-    if (saved.keyNext !== undefined) S.keyNext = saved.keyNext;
-    if (saved.count) { S.count = saved.count; syncCountSelect(); }
+    const s = JSON.parse(localStorage.getItem('tl_v2') || '{}');
+    if (s.theme)     applyTheme(s.theme);
+    if (s.fontSize)  applyFontSize(s.fontSize);
+    if (s.keyReveal) S.keyReveal = s.keyReveal;
+    if (s.keyNext)   S.keyNext   = s.keyNext;
+    if (s.keyTTS)    S.keyTTS    = s.keyTTS;
     syncSettingsUI();
   } catch(e) {}
 }
-
 function saveSettings() {
-  localStorage.setItem('tl_settings', JSON.stringify({
-    theme: S.theme,
-    fontSizePrimary: S.fontSizePrimary,
-    fontSizeSecondary: S.fontSizeSecondary,
-    keyReveal: S.keyReveal,
-    keyNext: S.keyNext,
-    count: S.count,
+  localStorage.setItem('tl_v2', JSON.stringify({
+    theme: S.theme, fontSize: S.fontSize,
+    keyReveal: S.keyReveal, keyNext: S.keyNext, keyTTS: S.keyTTS
   }));
 }
 
-function setTheme(name) {
+function applyTheme(name) {
   S.theme = name;
-  document.documentElement.dataset.theme = name === 'terminal' ? '' : name;
-  if (name === 'terminal') delete document.documentElement.dataset.theme;
-  $$('.theme-swatch').forEach(s => s.classList.toggle('active', s.dataset.theme === name));
+  const el = document.documentElement;
+  if (name === 'terminal') delete el.dataset.theme;
+  else el.dataset.theme = name;
+  $$('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === name));
   saveSettings();
 }
 
-function setFontSize(which, size) {
-  if (which === 'primary') {
-    S.fontSizePrimary = size;
-    $$('#font-size-primary .size-btn').forEach(b => b.classList.toggle('active', b.dataset.size === size));
-  } else {
-    S.fontSizeSecondary = size;
-    $$('#font-size-secondary .size-btn').forEach(b => b.classList.toggle('active', b.dataset.size === size));
-  }
-  // rerender cards with new font sizes
-  $$('.card-primary').forEach(el => {
-    el.className = 'card-primary' + (size !== 'default' && which === 'primary' ? ' font-' + size : el.className.replace('card-primary','').trim());
-  });
-  buildCards();
+function applyFontSize(px) {
+  S.fontSize = parseInt(px) || 18;
+  $$('.fs-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.fs) === S.fontSize));
+  const ci = $('fs-custom-input');
+  const known = [14,16,18,20,24,28,32];
+  if (!known.includes(S.fontSize)) ci.value = S.fontSize;
+  else ci.value = '';
+  if (S.current) renderCard();
   saveSettings();
 }
 
 function syncSettingsUI() {
-  $$('.theme-swatch').forEach(s => s.classList.toggle('active', s.dataset.theme === S.theme));
-  $$('#font-size-primary .size-btn').forEach(b => b.classList.toggle('active', b.dataset.size === S.fontSizePrimary));
-  $$('#font-size-secondary .size-btn').forEach(b => b.classList.toggle('active', b.dataset.size === S.fontSizeSecondary));
-  const kr = $('key-reveal-input'); if (kr) kr.value = S.keyReveal === ' ' ? 'Space' : S.keyReveal.toUpperCase();
-  const kn = $('key-next-input');   if (kn) kn.value = S.keyNext  === ' ' ? 'Space' : S.keyNext.toUpperCase();
-  syncCategoryChips();
-  syncCountSelect();
+  $$('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === S.theme));
+  $$('.fs-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.fs) === S.fontSize));
+  const ki = $('key-reveal-input'); if (ki) ki.value = S.keyReveal === ' ' ? 'Space' : S.keyReveal.toUpperCase();
+  const kn = $('key-next-input');   if (kn) kn.value = S.keyNext   === ' ' ? 'Space' : S.keyNext.toUpperCase();
+  const kt = $('key-tts-input');    if (kt) kt.value = S.keyTTS    === ' ' ? 'Space' : S.keyTTS.toUpperCase();
+  updateRevealLabel();
+  updateKeyHints();
 }
 
-function syncCountSelect() {
-  const sel = $('count-sel');
-  if (sel) sel.value = S.count;
+function updateRevealLabel() {
+  const el = $('reveal-shortcut-label');
+  if (el) el.textContent = S.keyReveal === ' ' ? 'Space' : S.keyReveal.toUpperCase();
+}
+function updateKeyHints() {
+  const r = $('hint-reveal-key'); if (r) r.textContent = S.keyReveal === ' ' ? 'Space' : S.keyReveal.toUpperCase();
+  const n = $('hint-next-key');   if (n) n.textContent = S.keyNext   === ' ' ? 'Space' : S.keyNext.toUpperCase();
+  const t = $('hint-tts-key');    if (t) t.textContent = S.keyTTS    === ' ' ? 'Space' : S.keyTTS.toUpperCase();
 }
 
-// ---------- Upload ----------
-function openUpload() { $('upload-overlay').classList.add('active'); }
-function closeUpload() { $('upload-overlay').classList.remove('active'); }
-
-function handleUploadFile(file) {
+/* ── Upload ─────────────────────────────────────────────────── */
+function handleUpload(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
       const rows = parseCSV(e.target.result);
-      if (rows.length === 0) throw new Error('No valid rows found. Check column headers.');
+      if (!rows.length) throw new Error('No valid rows. Check column headers.');
       S.allRows = rows;
-      buildLanguageOptions();
+      buildLangOptions();
       buildCategoryChips();
       applyFilters();
-      renderDeck();
+      nextCard();
       $('upload-status').className = 'upload-status ok';
       $('upload-status').textContent = `✓ Loaded ${rows.length} sentences from ${file.name}`;
-      setTimeout(closeUpload, 1500);
+      setTimeout(() => $('upload-overlay').classList.remove('active'), 1600);
     } catch(err) {
       $('upload-status').className = 'upload-status err';
       $('upload-status').textContent = '✗ ' + err.message;
@@ -449,163 +401,108 @@ function handleUploadFile(file) {
   reader.readAsText(file);
 }
 
-// ---------- Keyboard ----------
-function handleKey(e) {
-  // Ignore when typing in inputs
-  if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
+/* ── Mute icon swap ─────────────────────────────────────────── */
+const ICON_SOUND = `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
+const ICON_MUTED = `<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>`;
+function syncMuteIcon() {
+  const ic = $('mute-icon'); if (!ic) return;
+  ic.innerHTML = S.muted ? ICON_MUTED : ICON_SOUND;
+  $('mute-btn').classList.toggle('active', S.muted);
+}
 
+/* ── Keyboard ───────────────────────────────────────────────── */
+function handleKey(e) {
+  if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
   const key = e.key === ' ' ? ' ' : e.key.toLowerCase();
 
   if (S.presMode) {
-    if (key === S.keyReveal) { e.preventDefault(); presReveal(); return; }
-    if (key === S.keyNext || e.key === 'ArrowRight') { e.preventDefault(); presNext(); return; }
+    if (key === S.keyReveal || e.key === 'Enter') { e.preventDefault(); presReveal(); return; }
+    if (key === S.keyNext   || e.key === 'ArrowRight') { e.preventDefault(); presNext(); return; }
     if (e.key === 'ArrowLeft') { e.preventDefault(); S.presIndex = Math.max(0, S.presIndex - 1); renderPresCard(); return; }
-    if (e.key === 'Escape') { exitPresMode(); return; }
+    if (e.key === 'Escape') { exitPres(); return; }
     return;
   }
-
   if (e.key === 'Escape') {
-    closeSettings(); closeUpload(); return;
+    $('settings-overlay').classList.remove('active');
+    $('upload-overlay').classList.remove('active');
+    return;
   }
-  if (key === S.keyReveal && S.creatorMode) { e.preventDefault(); revealAll(); return; }
-  if (key === S.keyNext) { e.preventDefault(); renderDeck(); return; }
+  if (key === S.keyReveal && S.streamerMode) { e.preventDefault(); revealCard(); return; }
+  if (key === S.keyNext)                     { e.preventDefault(); nextCard();   return; }
+  if (key === S.keyTTS)                      { e.preventDefault(); speakCurrent(); return; }
 }
 
-// ---------- Attach Events ----------
+/* ── Attach events ──────────────────────────────────────────── */
 function attachEvents() {
-  // Language
-  $('lang-sel').addEventListener('change', e => {
-    S.lang = e.target.value;
-    applyFilters();
-    renderDeck();
-  });
+  $('lang-sel').addEventListener('change', e => { S.lang  = e.target.value; applyFilters(); nextCard(); });
+  $('level-sel').addEventListener('change',e => { S.level = e.target.value; applyFilters(); nextCard(); });
 
-  // Level
-  $('level-sel').addEventListener('change', e => {
-    S.level = e.target.value;
-    applyFilters();
-    renderDeck();
-  });
+  $('mute-btn').addEventListener('click', () => { S.muted = !S.muted; syncMuteIcon(); });
 
-  // Count
-  $('count-sel').addEventListener('change', e => {
-    S.count = parseInt(e.target.value);
-    saveSettings();
-    renderDeck();
-  });
+  $('streamer-btn').addEventListener('click', () => setStreamerMode(!S.streamerMode));
 
-  // Mute
-  $('mute-btn').addEventListener('click', () => {
-    S.muted = !S.muted;
-    $('mute-btn').classList.toggle('active', S.muted);
-    $('mute-btn').title = S.muted ? 'Unmute' : 'Mute';
-  });
+  $('settings-btn').addEventListener('click', () => $('settings-overlay').classList.add('active'));
+  $('settings-close').addEventListener('click', () => $('settings-overlay').classList.remove('active'));
+  $('settings-overlay').addEventListener('click', e => { if (e.target === $('settings-overlay')) $('settings-overlay').classList.remove('active'); });
 
-  // Creator mode toggle
-  $('creator-btn').addEventListener('click', () => {
-    if (S.presMode) { exitPresMode(); S.creatorMode = false; }
-    else { S.creatorMode = !S.creatorMode; enterOrExitCreator(); }
-  });
-
-  // Settings
-  $('settings-btn').addEventListener('click', openSettings);
-  $('settings-close').addEventListener('click', closeSettings);
-  $('settings-overlay').addEventListener('click', e => { if (e.target === $('settings-overlay')) closeSettings(); });
-
-  // Upload
-  $('upload-btn').addEventListener('click', openUpload);
-  $('upload-close').addEventListener('click', closeUpload);
-  $('upload-overlay').addEventListener('click', e => { if (e.target === $('upload-overlay')) closeUpload(); });
-  $('upload-file-input').addEventListener('change', e => {
-    if (e.target.files[0]) handleUploadFile(e.target.files[0]);
-  });
+  $('upload-btn').addEventListener('click', () => $('upload-overlay').classList.add('active'));
+  $('upload-close').addEventListener('click', () => $('upload-overlay').classList.remove('active'));
+  $('upload-overlay').addEventListener('click', e => { if (e.target === $('upload-overlay')) $('upload-overlay').classList.remove('active'); });
+  $('upload-file-input').addEventListener('change', e => { if (e.target.files[0]) handleUpload(e.target.files[0]); });
   const drop = $('upload-drop');
   drop.addEventListener('click', () => $('upload-file-input').click());
   drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
   drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
-  drop.addEventListener('drop', e => {
-    e.preventDefault(); drop.classList.remove('dragover');
-    if (e.dataTransfer.files[0]) handleUploadFile(e.dataTransfer.files[0]);
-  });
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]); });
 
-  // Theme swatches
-  $$('.theme-swatch').forEach(s => {
-    s.addEventListener('click', () => setTheme(s.dataset.theme));
-  });
+  // Theme dots
+  $$('.theme-dot').forEach(d => d.addEventListener('click', () => applyTheme(d.dataset.theme)));
 
   // Font size buttons
-  $$('#font-size-primary .size-btn').forEach(b => {
-    b.addEventListener('click', () => setFontSize('primary', b.dataset.size));
-  });
-  $$('#font-size-secondary .size-btn').forEach(b => {
-    b.addEventListener('click', () => setFontSize('secondary', b.dataset.size));
+  $$('.fs-btn').forEach(b => b.addEventListener('click', () => applyFontSize(b.dataset.fs)));
+  $('fs-custom-input').addEventListener('change', e => {
+    const v = parseInt(e.target.value);
+    if (v >= 8 && v <= 72) { $$('.fs-btn').forEach(b => b.classList.remove('active')); applyFontSize(v); }
   });
 
   // Key remap
-  $('key-reveal-input').addEventListener('keydown', e => {
-    e.preventDefault();
-    S.keyReveal = e.key === ' ' ? ' ' : e.key.toLowerCase();
-    e.target.value = e.key === ' ' ? 'Space' : e.key.toUpperCase();
-    saveSettings();
-  });
-  $('key-next-input').addEventListener('keydown', e => {
-    e.preventDefault();
-    S.keyNext = e.key === ' ' ? ' ' : e.key.toLowerCase();
-    e.target.value = e.key === ' ' ? 'Space' : e.key.toUpperCase();
-    saveSettings();
-    updateKeyHints();
-  });
+  function remapKey(inputId, stateKey, hintId, extraCb) {
+    $(inputId).addEventListener('keydown', e => {
+      e.preventDefault();
+      S[stateKey] = e.key === ' ' ? ' ' : e.key.toLowerCase();
+      e.target.value = e.key === ' ' ? 'Space' : e.key.toUpperCase();
+      const h = $(hintId); if (h) h.textContent = e.target.value;
+      if (extraCb) extraCb();
+      saveSettings();
+    });
+  }
+  remapKey('key-reveal-input', 'keyReveal', 'hint-reveal-key', updateRevealLabel);
+  remapKey('key-next-input',   'keyNext',   'hint-next-key');
+  remapKey('key-tts-input',    'keyTTS',    'hint-tts-key');
 
-  // Controls row
-  $('next-btn').addEventListener('click', renderDeck);
-  $('reveal-btn').addEventListener('click', revealAll);
+  // Controls
+  $('next-btn').addEventListener('click', nextCard);
+  $('reveal-btn').addEventListener('click', () => { if (S.streamerMode) revealCard(); });
   $('flip-btn').addEventListener('click', () => {
     S.creatorFlip = !S.creatorFlip;
-    $('flip-btn').querySelector('.flip-label').textContent = S.creatorFlip ? 'Target → EN' : 'EN → Target';
-    buildCards();
+    $('flip-label').textContent = S.creatorFlip ? 'Target → EN' : 'EN → Target';
+    S.revealed = false;
+    renderCard();
   });
+  $('pres-enter-btn').addEventListener('click', enterPres);
 
-  // Presentation controls
+  // Presentation
   $('pres-reveal-btn').addEventListener('click', presReveal);
   $('pres-next-btn').addEventListener('click', presNext);
-  $('pres-prev-btn').addEventListener('click', () => { S.presIndex = Math.max(0, S.presIndex - 1); renderPresCard(); });
-  $('pres-exit-btn').addEventListener('click', exitPresMode);
-  $('mirror-btn').addEventListener('click', () => {
-    $('mirror-btn').classList.toggle('active');
-    renderPresCard();
-  });
+  $('pres-prev-btn').addEventListener('click', () => { S.presIndex = Math.max(0, S.presIndex - 1); S.presRevealed = false; renderPresCard(); });
+  $('pres-exit-btn').addEventListener('click', exitPres);
+  $('mirror-btn').addEventListener('click', () => { $('mirror-btn').classList.toggle('active'); renderPresCard(); });
 
-  // Pres enter from controls
-  const peb2 = document.getElementById("pres-enter-btn2");
-  if (peb2) peb2.addEventListener("click", () => { S.creatorMode = true; enterOrExitCreator(); enterPresMode(); });
-
-  // Keyboard
   document.addEventListener('keydown', handleKey);
 
-  updateKeyHints();
+  syncMuteIcon();
+  syncSettingsUI();
 }
 
-function enterOrExitCreator() {
-  $('creator-btn').classList.toggle('active', S.creatorMode);
-  const ctrlRow = $('controls-row');
-  if (S.creatorMode) {
-    ctrlRow.style.display = 'flex';
-    if (S.presMode) exitPresMode();
-    document.getElementById('pres-enter-btn2').style.display = 'flex';
-  } else {
-    document.getElementById('pres-enter-btn2').style.display = 'none';
-    S.presMode = false;
-    $('presentation-mode').classList.remove('active');
-  }
-  buildCards();
-}
-
-function updateKeyHints() {
-  const r = $('hint-reveal-key'); if (r) r.textContent = S.keyReveal === ' ' ? 'Space' : S.keyReveal.toUpperCase();
-  const n = $('hint-next-key');   if (n) n.textContent = S.keyNext   === ' ' ? 'Space' : S.keyNext.toUpperCase();
-}
-
-// ---------- Boot ----------
-document.addEventListener('DOMContentLoaded', () => {
-  loadDefaultCSV();
-});
+/* ── Boot ───────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', loadDefaultCSV);
