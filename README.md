@@ -8,28 +8,38 @@ A fast, themeable sentence-based language flashcard app. Built as a cleaner, mor
 
 ## Features
 
-**Flashcard study** — flip between English and your target language, reveal translations one at a time, and navigate with keyboard shortcuts or on-screen controls.
+**Flashcard study**
+- Flip between English and your target language, reveal translations one at a time, and navigate with keyboard shortcuts or on-screen controls.
 
-**CEFR level filtering** — filter cards by A1 through C2 so you study vocabulary appropriate to your level.
+**CEFR level filtering**
+- Filter cards by A1 through C2 so you study vocabulary appropriate to your level.
 
-**Language & category filtering** — filter by language and topic category simultaneously; categories are auto-detected from your data.
+**Language & category filtering**
+- Filter by language and topic category simultaneously; categories are auto-detected from your data.
 
-**Text-to-speech** — hear the target sentence spoken aloud on reveal or on demand. Auto-play on reveal can be toggled.
+**Text-to-speech**
+- Hear the target sentence spoken aloud on reveal or on demand. Auto-play on reveal can be toggled.
 
-**Present Mode** — a full-screen streamer/classroom view with a progress bar, ideal for projection or live study sessions.
+**Present Mode**
+- A full-screen streamer/classroom view with a progress bar, ideal for projection or live study sessions.
 
 **22 built-in themes**
-11 dark themes (Terminal, Amber, Arctic, Rose Gold, Obsidian, Dracula, Gruvbox, Catppuccin, Sonokai, Nord, Mocha)
-11 light themes (Ivory, Paper, Latte, Gruvbox Light, Solarized, Sepia, Rose Light, Sage, Slate, Sand, Mint)
-+ a fully custom theme editor with per-variable colour controls.
+- 11 dark themes (Terminal, Amber, Arctic, Rose Gold, Obsidian, Dracula, Gruvbox, Catppuccin, Sonokai, Nord, Mocha)
+- 11 light themes (Ivory, Paper, Latte, Gruvbox Light, Solarized, Sepia, Rose Light, Sage, Slate, Sand, Mint)
+- A fully custom theme editor with per-variable colour controls.
 
-**Custom CSV upload** — bring your own sentence data. Drop a CSV with the columns `language, level, english, translation, category` and it loads instantly, no backend required.
+**Custom CSV upload**
+- Bring your own sentence data. 
+- Drop a CSV with the columns `language, level, english, translation, category` and it loads instantly.
 
-**Remappable keyboard shortcuts** — reassign Reveal, Next, Previous, and Speak (TTS) to any key.
+**Remappable keyboard shortcuts**
+- Reassign Reveal, Next, Previous, and Speak (TTS) to any key.
 
-**Randomise order** — toggle random sentence ordering on or off.
+**Randomise order**
+- Toggle random sentence ordering on or off.
 
-**Adjustable font size** — preset sizes from 14–30px or a custom px input.
+**Adjustable font size**
+- Preset sizes from 14–30px or a custom px input.
 
 ---
 
