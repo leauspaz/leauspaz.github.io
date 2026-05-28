@@ -1,50 +1,50 @@
 'use strict';
 
 /* ── Google Drive CSV URL ───────────────────────────────── */
-const GDRIVE_CSV = 'https://drive.google.com/uc?export=download&id=1Toz6anPncyRexhn6cgB9m16SnMOfExmp';
+const GDRIVE_CSV = 'https://drive.usercontent.google.com/download?id=1Toz6anPncyRexhn6cgB9m16SnMOfExmp&export=download&authuser=0&confirm=t&uuid=dee437aa-5cc6-4371-9f79-c9d5395d4f34&at=AAINaIISFHzGiPLz4Kxd07vavwyO:1779951965379';
 
 /* ── State ──────────────────────────────────────────────── */
 const S = {
-  allRows:        [],
-  filtered:       [],
-  pool:           [],
-  poolIndex:      0,
-  languages:      [],
-  categories:     [],
-  lang:           'All',
-  level:          'All',
+  allRows: [],
+  filtered: [],
+  pool: [],
+  poolIndex: 0,
+  languages: [],
+  categories: [],
+  lang: 'All',
+  level: 'All',
   categories_sel: ['All'],
-  autoPlay:       true,
-  presMode:       false,
-  presRevealed:   false,
-  creatorFlip:    false,
-  revealed:       false,
-  randomize:      true,
-  theme:          'terminal',
-  fontSize:       22,
-  keyReveal:      ' ',
-  keyNext:        'ArrowRight',
-  keyPrev:        'ArrowLeft',
-  keyTTS:         's',
-  customVars:     {},
+  autoPlay: true,
+  presMode: false,
+  presRevealed: false,
+  creatorFlip: false,
+  revealed: false,
+  randomize: true,
+  theme: 'terminal',
+  fontSize: 22,
+  keyReveal: ' ',
+  keyNext: 'ArrowRight',
+  keyPrev: 'ArrowLeft',
+  keyTTS: 's',
+  customVars: {},
 };
 
 /* ── CSS custom-theme variables we expose ───────────────── */
 const COLOR_VARS = [
-  { key: '--bg',          label: 'Background' },
-  { key: '--bg2',         label: 'Background 2' },
-  { key: '--bg3',         label: 'Background 3' },
-  { key: '--border',      label: 'Border' },
-  { key: '--text',        label: 'Text' },
-  { key: '--text-dim',    label: 'Text Dim' },
-  { key: '--head',        label: 'Heading / Primary' },
-  { key: '--accent',      label: 'Accent / Highlight' },
-  { key: '--card-bg',     label: 'Card Background' },
+  { key: '--bg', label: 'Background' },
+  { key: '--bg2', label: 'Background 2' },
+  { key: '--bg3', label: 'Background 3' },
+  { key: '--border', label: 'Border' },
+  { key: '--text', label: 'Text' },
+  { key: '--text-dim', label: 'Text Dim' },
+  { key: '--head', label: 'Heading / Primary' },
+  { key: '--accent', label: 'Accent / Highlight' },
+  { key: '--card-bg', label: 'Card Background' },
   { key: '--card-border', label: 'Card Border' },
 ];
 
 /* ── DOM ─────────────────────────────────────────────────── */
-const $  = id  => document.getElementById(id);
+const $ = id => document.getElementById(id);
 const $$ = sel => document.querySelectorAll(sel);
 
 /* ── Scramble ────────────────────────────────────────────── */
@@ -78,7 +78,7 @@ function splitCSV(line) {
 }
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
-  const hdr   = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^\uFEFF/, ''));
+  const hdr = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^\uFEFF/, ''));
   return lines.slice(1).map(l => {
     const cols = splitCSV(l), row = {};
     hdr.forEach((h, i) => row[h] = (cols[i] || '').trim().replace(/^"|"$/g, '').trim());
@@ -98,16 +98,16 @@ async function loadDefaultCSV() {
       const rows = parseCSV(text);
       if (rows.length) { S.allRows = rows; init(); return; }
     }
-  } catch(e) { /* fall through */ }
+  } catch (e) { /* fall through */ }
 
   // Fallback: local file
   try {
-    const res  = await fetch('./data/sentences.csv');
+    const res = await fetch('./data/sentences.csv');
     if (!res.ok) throw new Error('local not found');
     const text = await res.text();
     const rows = parseCSV(text);
     if (rows.length) { S.allRows = rows; init(); return; }
-  } catch(e) { /* fall through */ }
+  } catch (e) { /* fall through */ }
 
   // Nothing loaded — show empty state with upload prompt
   $('empty-state').textContent = 'No sentences loaded. Upload a CSV using the CSV button above.';
@@ -170,8 +170,8 @@ function syncChips() {
 
 function applyFilters() {
   let r = S.allRows;
-  if (S.lang  !== 'All') r = r.filter(x => x.language === S.lang);
-  if (S.level !== 'All') r = r.filter(x => x.level    === S.level);
+  if (S.lang !== 'All') r = r.filter(x => x.language === S.lang);
+  if (S.level !== 'All') r = r.filter(x => x.level === S.level);
   if (!S.categories_sel.includes('All'))
     r = r.filter(x => S.categories_sel.includes(x.category));
   S.filtered = r;
@@ -190,14 +190,14 @@ function shuffle(a) {
   return b;
 }
 function buildPool() {
-  S.pool      = S.randomize ? shuffle(S.filtered) : [...S.filtered];
+  S.pool = S.randomize ? shuffle(S.filtered) : [...S.filtered];
   S.poolIndex = 0;
 }
 function currentRow() { return S.pool[S.poolIndex] || null; }
 
 /* ── Card ────────────────────────────────────────────────── */
 function renderCard() {
-  const row  = currentRow();
+  const row = currentRow();
   const grid = $('cards-grid');
   S.revealed = false;
 
@@ -208,8 +208,8 @@ function renderCard() {
   }
   $('empty-state').classList.remove('active');
 
-  const primary   = S.creatorFlip ? row.translation : row.english;
-  const secondary = S.creatorFlip ? row.english      : row.translation;
+  const primary = S.creatorFlip ? row.translation : row.english;
+  const secondary = S.creatorFlip ? row.english : row.translation;
 
   grid.innerHTML = `
     <div class="card" id="main-card" style="--card-fs:${S.fontSize}px" data-fs="1">
@@ -240,7 +240,7 @@ function revealCard() {
   S.revealed = true;
   const row = currentRow(); if (!row) return;
   const secondary = S.creatorFlip ? row.english : row.translation;
-  const sec  = $('card-secondary');
+  const sec = $('card-secondary');
   const hint = $('card-hint');
   sec.classList.remove('hidden');
   scramble(sec, secondary, 360, () => {
@@ -262,16 +262,16 @@ function goPrev() {
 }
 
 function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /* ── TTS ─────────────────────────────────────────────────── */
-const LANG_MAP = {German:'de-DE',French:'fr-FR',Polish:'pl-PL',Spanish:'es-ES',Italian:'it-IT',Japanese:'ja-JP'};
+const LANG_MAP = { German: 'de-DE', French: 'fr-FR', Polish: 'pl-PL', Spanish: 'es-ES', Italian: 'it-IT', Japanese: 'ja-JP' };
 function speak(text, lang) {
   if (!window.speechSynthesis) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang  = LANG_MAP[lang] || 'de-DE';
+  u.lang = LANG_MAP[lang] || 'de-DE';
   speechSynthesis.speak(u);
 }
 function speakCurrent() {
@@ -281,7 +281,7 @@ function speakCurrent() {
 
 /* ── Present mode ────────────────────────────────────────── */
 function enterPres() {
-  S.presMode     = true;
+  S.presMode = true;
   S.presRevealed = false;
   $('presentation-mode').classList.add('active');
   $('streamer-btn').classList.add('active');
@@ -294,8 +294,8 @@ function exitPres() {
 }
 function renderPresCard() {
   const row = currentRow(); if (!row) return;
-  const primary   = S.creatorFlip ? row.translation : row.english;
-  const secondary = S.creatorFlip ? row.english      : row.translation;
+  const primary = S.creatorFlip ? row.translation : row.english;
+  const secondary = S.creatorFlip ? row.english : row.translation;
   const pPrim = $('pres-primary'), pSec = $('pres-secondary');
 
   $('pres-meta').innerHTML = `<span class="pres-level">${row.level}</span><span>${row.category}</span><span>${row.language}</span>`;
@@ -305,7 +305,7 @@ function renderPresCard() {
   S.presRevealed = false;
 
   pPrim.style.fontSize = S.fontSize + 'px';
-  pSec.style.fontSize  = S.fontSize + 'px';
+  pSec.style.fontSize = S.fontSize + 'px';
   $('pres-progress-bar').style.width = ((S.poolIndex + 1) / S.pool.length * 100) + '%';
 }
 function presReveal() {
@@ -323,7 +323,7 @@ function presNext() { goNext(); S.presRevealed = false; renderPresCard(); }
 function presPrev() { goPrev(); S.presRevealed = false; renderPresCard(); }
 
 /* ── Mute / auto-play toggle ─────────────────────────────── */
-const ICON_ON  = `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
+const ICON_ON = `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
 const ICON_OFF = `<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>`;
 function syncMuteBtn() {
   $('mute-icon').innerHTML = S.autoPlay ? ICON_ON : ICON_OFF;
@@ -362,7 +362,7 @@ function buildColorPickers() {
     row.className = 'color-row';
     row.innerHTML = `
       <span class="color-label">${label}</span>
-      <div class="color-swatch" id="swatch-${key.replace(/--/g,'').replace(/-/g,'_')}">
+      <div class="color-swatch" id="swatch-${key.replace(/--/g, '').replace(/-/g, '_')}">
         <input type="color" data-var="${key}" title="${key}"/>
       </div>
       <input type="text" class="color-hex" data-var="${key}" maxlength="7" placeholder="#000000"/>
@@ -370,7 +370,7 @@ function buildColorPickers() {
     grid.appendChild(row);
 
     const picker = row.querySelector('input[type=color]');
-    const hex    = row.querySelector('.color-hex');
+    const hex = row.querySelector('.color-hex');
     const swatch = row.querySelector('.color-swatch');
 
     picker.addEventListener('input', () => {
@@ -394,15 +394,15 @@ function buildColorPickers() {
 function syncColorPickers() {
   const computed = getComputedStyle(document.documentElement);
   COLOR_VARS.forEach(({ key }) => {
-    const raw   = computed.getPropertyValue(key).trim();
-    const hex   = cssColorToHex(raw) || '#000000';
-    const id    = 'swatch-' + key.replace(/--/g,'').replace(/-/g,'_');
-    const sw    = $(id); if (!sw) return;
+    const raw = computed.getPropertyValue(key).trim();
+    const hex = cssColorToHex(raw) || '#000000';
+    const id = 'swatch-' + key.replace(/--/g, '').replace(/-/g, '_');
+    const sw = $(id); if (!sw) return;
     sw.style.background = hex;
     const picker = sw.querySelector('input[type=color]');
-    const hexEl  = sw.parentElement.querySelector('.color-hex');
+    const hexEl = sw.parentElement.querySelector('.color-hex');
     if (picker) picker.value = hex;
-    if (hexEl)  hexEl.value  = hex.toUpperCase();
+    if (hexEl) hexEl.value = hex.toUpperCase();
     // If we have a custom var for this key, apply it
     if (S.customVars[key]) {
       setCustomVar(key, S.customVars[key], false);
@@ -427,7 +427,7 @@ function resetCustomVars() {
 
 function normalizeHex(val) {
   val = val.trim().replace(/^#/, '');
-  if (val.length === 3) val = val.split('').map(c => c+c).join('');
+  if (val.length === 3) val = val.split('').map(c => c + c).join('');
   if (val.length !== 6) return null;
   if (!/^[0-9a-fA-F]{6}$/.test(val)) return null;
   return '#' + val;
@@ -443,7 +443,7 @@ function cssColorToHex(color) {
   }
   const m = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
   if (m) {
-    return '#' + [m[1],m[2],m[3]].map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
+    return '#' + [m[1], m[2], m[3]].map(n => parseInt(n).toString(16).padStart(2, '0')).join('');
   }
   return null;
 }
@@ -452,32 +452,32 @@ function cssColorToHex(color) {
 function loadSettings() {
   try {
     const s = JSON.parse(localStorage.getItem('ll_v2') || '{}');
-    if (s.theme)      applyTheme(s.theme);
-    if (s.fontSize)   S.fontSize   = s.fontSize;
+    if (s.theme) applyTheme(s.theme);
+    if (s.fontSize) S.fontSize = s.fontSize;
     if (s.keyReveal !== undefined) S.keyReveal = s.keyReveal;
-    if (s.keyNext   !== undefined) S.keyNext   = s.keyNext;
-    if (s.keyPrev   !== undefined) S.keyPrev   = s.keyPrev;
-    if (s.keyTTS    !== undefined) S.keyTTS    = s.keyTTS;
+    if (s.keyNext !== undefined) S.keyNext = s.keyNext;
+    if (s.keyPrev !== undefined) S.keyPrev = s.keyPrev;
+    if (s.keyTTS !== undefined) S.keyTTS = s.keyTTS;
     if (s.randomize !== undefined) S.randomize = s.randomize;
-    if (s.autoPlay  !== undefined) S.autoPlay  = s.autoPlay;
+    if (s.autoPlay !== undefined) S.autoPlay = s.autoPlay;
     if (s.customVars) {
       S.customVars = s.customVars;
       Object.entries(S.customVars).forEach(([k, v]) => {
         document.documentElement.style.setProperty(k, v);
       });
     }
-  } catch(e) {}
+  } catch (e) { }
 }
 function saveSettings() {
   localStorage.setItem('ll_v2', JSON.stringify({
-    theme:      S.theme,
-    fontSize:   S.fontSize,
-    keyReveal:  S.keyReveal,
-    keyNext:    S.keyNext,
-    keyPrev:    S.keyPrev,
-    keyTTS:     S.keyTTS,
-    randomize:  S.randomize,
-    autoPlay:   S.autoPlay,
+    theme: S.theme,
+    fontSize: S.fontSize,
+    keyReveal: S.keyReveal,
+    keyNext: S.keyNext,
+    keyPrev: S.keyPrev,
+    keyTTS: S.keyTTS,
+    randomize: S.randomize,
+    autoPlay: S.autoPlay,
     customVars: S.customVars,
   }));
 }
@@ -489,9 +489,9 @@ function syncSettingsUI() {
   syncMuteBtn();
   const keys = {
     'key-reveal-input': S.keyReveal,
-    'key-next-input':   S.keyNext,
-    'key-prev-input':   S.keyPrev,
-    'key-tts-input':    S.keyTTS,
+    'key-next-input': S.keyNext,
+    'key-prev-input': S.keyPrev,
+    'key-tts-input': S.keyTTS,
   };
   Object.entries(keys).forEach(([id, val]) => {
     const el = $(id); if (el) el.value = keyLabel(val);
@@ -505,11 +505,11 @@ function syncToggle(id, val) {
 
 /* ── Key helpers ─────────────────────────────────────────── */
 function keyLabel(k) {
-  if (!k || k === ' ')     return 'Space';
-  if (k === 'ArrowRight')  return '→';
-  if (k === 'ArrowLeft')   return '←';
-  if (k === 'ArrowUp')     return '↑';
-  if (k === 'ArrowDown')   return '↓';
+  if (!k || k === ' ') return 'Space';
+  if (k === 'ArrowRight') return '→';
+  if (k === 'ArrowLeft') return '←';
+  if (k === 'ArrowUp') return '↑';
+  if (k === 'ArrowDown') return '↓';
   return k.length === 1 ? k.toUpperCase() : k;
 }
 function matchKey(e, k) {
@@ -518,23 +518,23 @@ function matchKey(e, k) {
 function updateKeyHints() {
   const m = {
     'hint-reveal-key': S.keyReveal,
-    'hint-next-key':   S.keyNext,
-    'hint-prev-key':   S.keyPrev,
-    'hint-tts-key':    S.keyTTS,
+    'hint-next-key': S.keyNext,
+    'hint-prev-key': S.keyPrev,
+    'hint-tts-key': S.keyTTS,
   };
-  Object.entries(m).forEach(([id, val]) => { const el=$(id); if(el) el.textContent = keyLabel(val); });
+  Object.entries(m).forEach(([id, val]) => { const el = $(id); if (el) el.textContent = keyLabel(val); });
 }
 
 /* ── Keyboard ────────────────────────────────────────────── */
 function handleKey(e) {
-  if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
+  if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
   if (S.presMode) {
-    if (e.key === 'Escape')           { exitPres(); return; }
-    if (matchKey(e, S.keyReveal))     { e.preventDefault(); presReveal();    return; }
-    if (matchKey(e, S.keyNext))       { e.preventDefault(); presNext();      return; }
-    if (matchKey(e, S.keyPrev))       { e.preventDefault(); presPrev();      return; }
-    if (matchKey(e, S.keyTTS))        { e.preventDefault(); speakCurrent();  return; }
+    if (e.key === 'Escape') { exitPres(); return; }
+    if (matchKey(e, S.keyReveal)) { e.preventDefault(); presReveal(); return; }
+    if (matchKey(e, S.keyNext)) { e.preventDefault(); presNext(); return; }
+    if (matchKey(e, S.keyPrev)) { e.preventDefault(); presPrev(); return; }
+    if (matchKey(e, S.keyTTS)) { e.preventDefault(); speakCurrent(); return; }
     return;
   }
   if (e.key === 'Escape') {
@@ -542,10 +542,10 @@ function handleKey(e) {
     $('upload-overlay').classList.remove('active');
     return;
   }
-  if (matchKey(e, S.keyReveal)) { e.preventDefault(); revealCard();   return; }
-  if (matchKey(e, S.keyNext))   { e.preventDefault(); goNext();       return; }
-  if (matchKey(e, S.keyPrev))   { e.preventDefault(); goPrev();       return; }
-  if (matchKey(e, S.keyTTS))    { e.preventDefault(); speakCurrent(); return; }
+  if (matchKey(e, S.keyReveal)) { e.preventDefault(); revealCard(); return; }
+  if (matchKey(e, S.keyNext)) { e.preventDefault(); goNext(); return; }
+  if (matchKey(e, S.keyPrev)) { e.preventDefault(); goPrev(); return; }
+  if (matchKey(e, S.keyTTS)) { e.preventDefault(); speakCurrent(); return; }
 }
 
 /* ── Upload ──────────────────────────────────────────────── */
@@ -564,7 +564,7 @@ function handleUpload(file) {
       $('upload-status').className = 'upload-status ok';
       $('upload-status').textContent = `✓ Loaded ${rows.length} sentences from ${file.name}`;
       setTimeout(() => $('upload-overlay').classList.remove('active'), 1600);
-    } catch(err) {
+    } catch (err) {
       $('upload-status').className = 'upload-status err';
       $('upload-status').textContent = '✗ ' + err.message;
     }
@@ -574,23 +574,23 @@ function handleUpload(file) {
 
 /* ── Attach events ───────────────────────────────────────── */
 function attachEvents() {
-  $('lang-sel').addEventListener('change',  e => { S.lang  = e.target.value; applyFilters(); buildPool(); renderCard(); });
+  $('lang-sel').addEventListener('change', e => { S.lang = e.target.value; applyFilters(); buildPool(); renderCard(); });
   $('level-sel').addEventListener('change', e => { S.level = e.target.value; applyFilters(); buildPool(); renderCard(); });
 
   $('mute-btn').addEventListener('click', () => { S.autoPlay = !S.autoPlay; syncMuteBtn(); saveSettings(); });
   $('streamer-btn').addEventListener('click', () => S.presMode ? exitPres() : enterPres());
 
-  $('settings-btn').addEventListener('click',   () => { $('settings-overlay').classList.add('active'); syncColorPickers(); });
+  $('settings-btn').addEventListener('click', () => { $('settings-overlay').classList.add('active'); syncColorPickers(); });
   $('settings-close').addEventListener('click', () => $('settings-overlay').classList.remove('active'));
   $('settings-overlay').addEventListener('click', e => { if (e.target === $('settings-overlay')) $('settings-overlay').classList.remove('active'); });
 
-  $('upload-btn').addEventListener('click',   () => $('upload-overlay').classList.add('active'));
+  $('upload-btn').addEventListener('click', () => $('upload-overlay').classList.add('active'));
   $('upload-close').addEventListener('click', () => $('upload-overlay').classList.remove('active'));
   $('upload-overlay').addEventListener('click', e => { if (e.target === $('upload-overlay')) $('upload-overlay').classList.remove('active'); });
   $('upload-file-input').addEventListener('change', e => { if (e.target.files[0]) handleUpload(e.target.files[0]); });
   const drop = $('upload-drop');
-  drop.addEventListener('click',    () => $('upload-file-input').click());
-  drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('dragover'); });
+  drop.addEventListener('click', () => $('upload-file-input').click());
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
   drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
   drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]); });
 
@@ -621,13 +621,13 @@ function attachEvents() {
     });
   }
   remapKey('key-reveal-input', 'keyReveal');
-  remapKey('key-next-input',   'keyNext');
-  remapKey('key-prev-input',   'keyPrev');
-  remapKey('key-tts-input',    'keyTTS');
+  remapKey('key-next-input', 'keyNext');
+  remapKey('key-prev-input', 'keyPrev');
+  remapKey('key-tts-input', 'keyTTS');
 
   // Controls
-  $('prev-btn').addEventListener('click',   goPrev);
-  $('next-btn').addEventListener('click',   goNext);
+  $('prev-btn').addEventListener('click', goPrev);
+  $('next-btn').addEventListener('click', goNext);
   $('reveal-btn').addEventListener('click', revealCard);
   $('flip-btn').addEventListener('click', () => {
     S.creatorFlip = !S.creatorFlip;
@@ -637,10 +637,10 @@ function attachEvents() {
 
   // Present controls
   $('pres-reveal-btn').addEventListener('click', presReveal);
-  $('pres-next-btn').addEventListener('click',   presNext);
-  $('pres-prev-btn').addEventListener('click',   presPrev);
-  $('pres-tts-btn').addEventListener('click',    speakCurrent);
-  $('pres-exit-btn').addEventListener('click',   exitPres);
+  $('pres-next-btn').addEventListener('click', presNext);
+  $('pres-prev-btn').addEventListener('click', presPrev);
+  $('pres-tts-btn').addEventListener('click', speakCurrent);
+  $('pres-exit-btn').addEventListener('click', exitPres);
 
   document.addEventListener('keydown', handleKey);
 
