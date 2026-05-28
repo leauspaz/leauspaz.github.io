@@ -1,7 +1,7 @@
 'use strict';
 
 /* ── Google Drive CSV URL ───────────────────────────────── */
-const GDRIVE_CSV = 'https://drive.usercontent.google.com/download?id=1Toz6anPncyRexhn6cgB9m16SnMOfExmp&export=download&authuser=0&confirm=t&uuid=dee437aa-5cc6-4371-9f79-c9d5395d4f34&at=AAINaIISFHzGiPLz4Kxd07vavwyO:1779951965379';
+const GDRIVE_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRRfCI2jZaiIncwd9H8Edmgov8VWTKaMAd27my9FgecSF_UuAJAp-vVmM8JZJygpdXUJEV-uK2wdwmL/pub?output=csv';
 
 /* ── State ──────────────────────────────────────────────── */
 const S = {
