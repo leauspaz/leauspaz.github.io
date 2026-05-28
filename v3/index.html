@@ -8,6 +8,7 @@
 </head>
 <body>
 
+<!-- TOP BAR -->
 <div id="topbar">
   <div class="tb-group">
     <a class="logo" href="#">
@@ -25,11 +26,13 @@
       <option value="C1">C1</option><option value="C2">C2</option>
     </select>
   </div>
+
   <div class="tb-spacer"></div>
+
   <div class="tb-group">
     <a class="bar-text-btn bmc" href="https://buymeacoffee.com/leauspaz" target="_blank" rel="noopener">☕ BMC</a>
     <button class="bar-text-btn" id="upload-btn">
-      <svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       CSV
     </button>
     <div class="bar-sep"></div>
@@ -49,6 +52,7 @@
   </div>
 </div>
 
+<!-- MAIN -->
 <div id="main">
   <div id="filter-bar">
     <span class="filter-label">Category</span>
@@ -60,24 +64,27 @@
   <div id="controls-row">
     <button class="ctrl-btn" id="prev-btn">
       <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Prev
+      Prev <span class="ctrl-shortcut">←</span>
     </button>
     <button class="ctrl-btn primary" id="reveal-btn">
       <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      Reveal
+      Reveal <span class="ctrl-shortcut" id="reveal-shortcut-label">Space</span>
     </button>
     <button class="ctrl-btn" id="next-btn">
-      Next
+      Next <span class="ctrl-shortcut">→</span>
       <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </button>
     <button class="ctrl-btn" id="flip-btn">
       <svg viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
       <span id="flip-label">EN → Target</span>
     </button>
+    <button class="ctrl-btn" id="mirror-btn" title="Mirror text">
+      <svg viewBox="0 0 24 24"><path d="M12 3v18M3 7l4 5-4 5M21 7l-4 5 4 5"/></svg>
+    </button>
   </div>
 </div>
 
-<!-- PRESENT MODE -->
+<!-- PRESENT / STREAMER MODE overlay -->
 <div id="presentation-mode">
   <div class="pres-meta" id="pres-meta"></div>
   <div class="pres-primary" id="pres-primary"></div>
@@ -85,18 +92,24 @@
   <div class="pres-controls">
     <button class="ctrl-btn" id="pres-prev-btn">
       <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      <span class="ctrl-shortcut">←</span>
     </button>
     <button class="ctrl-btn primary" id="pres-reveal-btn">
       <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      Reveal
+      Reveal <span class="ctrl-shortcut" id="pres-reveal-shortcut">Space</span>
     </button>
     <button class="ctrl-btn" id="pres-next-btn">
+      <span class="ctrl-shortcut">→</span>
       <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </button>
-    <button class="ctrl-btn" id="pres-tts-btn">
+    <button class="ctrl-btn" id="pres-tts-btn" title="Speak">
       <svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      <span class="ctrl-shortcut" id="pres-tts-shortcut">S</span>
     </button>
-    <button class="ctrl-btn" id="pres-exit-btn">✕ Exit</button>
+    <button class="ctrl-btn" id="pres-mirror-btn" title="Mirror">
+      <svg viewBox="0 0 24 24"><path d="M12 3v18M3 7l4 5-4 5M21 7l-4 5 4 5"/></svg>
+    </button>
+    <button class="ctrl-btn" id="pres-exit-btn">✕ Exit <span class="ctrl-shortcut">Esc</span></button>
   </div>
   <div class="pres-progress"><div class="pres-progress-bar" id="pres-progress-bar" style="width:0%"></div></div>
 </div>
@@ -104,93 +117,98 @@
 <!-- SETTINGS -->
 <div id="settings-overlay">
   <div id="settings-panel">
-    <div class="settings-title">Settings<button class="settings-close" id="settings-close">✕</button></div>
+    <div class="settings-title">
+      Settings
+      <button class="settings-close" id="settings-close">✕</button>
+    </div>
 
-    <!-- Themes -->
     <div class="settings-section">
       <div class="settings-section-label">Theme — Dark</div>
-      <div class="theme-dots" id="theme-dots-dark">
-        <span class="theme-dot active" data-theme="terminal"    style="background:#e7ff00" title="Terminal"></span>
-        <span class="theme-dot"        data-theme="amber"       style="background:#ffb300" title="Amber"></span>
-        <span class="theme-dot"        data-theme="arctic"      style="background:#4fc3f7" title="Arctic"></span>
-        <span class="theme-dot"        data-theme="rose"        style="background:#f48fb1" title="Rose Gold"></span>
-        <span class="theme-dot"        data-theme="obsidian"    style="background:#bf5af2" title="Obsidian"></span>
-        <span class="theme-dot"        data-theme="dracula"     style="background:#ff79c6" title="Dracula"></span>
-        <span class="theme-dot"        data-theme="gruvbox"     style="background:#b8bb26" title="Gruvbox"></span>
-        <span class="theme-dot"        data-theme="catppuccin"  style="background:#89b4fa" title="Catppuccin"></span>
-        <span class="theme-dot"        data-theme="sonokai"     style="background:#9ed072" title="Sonokai"></span>
-        <span class="theme-dot"        data-theme="nord"        style="background:#88c0d0" title="Nord"></span>
-        <span class="theme-dot"        data-theme="mocha"       style="background:#e78a4e" title="Mocha"></span>
+      <div class="theme-dots">
+        <span class="theme-dot active" data-theme="terminal"   style="background:#e7ff00"  title="Terminal"></span>
+        <span class="theme-dot"        data-theme="amber"      style="background:#ffb300"  title="Amber"></span>
+        <span class="theme-dot"        data-theme="arctic"     style="background:#4fc3f7"  title="Arctic"></span>
+        <span class="theme-dot"        data-theme="rose"       style="background:#f48fb1"  title="Rose Gold"></span>
+        <span class="theme-dot"        data-theme="obsidian"   style="background:#bf5af2"  title="Obsidian"></span>
+        <span class="theme-dot"        data-theme="forest"     style="background:#50e070"  title="Forest"></span>
+        <span class="theme-dot"        data-theme="steel"      style="background:#7090e8"  title="Steel"></span>
+        <span class="theme-dot"        data-theme="dracula"    style="background:#ff79c6"  title="Dracula"></span>
+        <span class="theme-dot"        data-theme="gruvbox"    style="background:#b8bb26"  title="Gruvbox"></span>
+        <span class="theme-dot"        data-theme="mocha"      style="background:#e78a4e"  title="Mocha"></span>
+        <span class="theme-dot"        data-theme="catppuccin" style="background:#89b4fa"  title="Catppuccin"></span>
+        <span class="theme-dot"        data-theme="sonokai"    style="background:#9ed072"  title="Sonokai"></span>
+        <span class="theme-dot"        data-theme="nord"       style="background:#88c0d0"  title="Nord"></span>
       </div>
-      <div class="settings-section-label" style="margin-top:14px">Theme — Light</div>
-      <div class="theme-dots" id="theme-dots-light">
-        <span class="theme-dot" data-theme="ivory"         style="background:#7a3c0e" title="Ivory"></span>
-        <span class="theme-dot" data-theme="paper"         style="background:#9c2318" title="Paper"></span>
-        <span class="theme-dot" data-theme="latte"         style="background:#1450c8" title="Latte"></span>
-        <span class="theme-dot" data-theme="gruvbox-light" style="background:#8c5800" title="Gruvbox Light"></span>
-        <span class="theme-dot" data-theme="solarized"     style="background:#1870b0" title="Solarized"></span>
-        <span class="theme-dot" data-theme="sepia"         style="background:#8a4010" title="Sepia"></span>
-        <span class="theme-dot" data-theme="rose-light"    style="background:#a01830" title="Rose Light"></span>
-        <span class="theme-dot" data-theme="sage"          style="background:#1a6030" title="Sage"></span>
-        <span class="theme-dot" data-theme="slate-light"   style="background:#3040a0" title="Slate"></span>
-        <span class="theme-dot" data-theme="sand"          style="background:#7a5000" title="Sand"></span>
-        <span class="theme-dot" data-theme="mint"          style="background:#0a6040" title="Mint"></span>
+      <div class="settings-section-label" style="margin-top:12px">Theme — Light</div>
+      <div class="theme-dots">
+        <span class="theme-dot" data-theme="ivory"        style="background:#8b4513"  title="Ivory"></span>
+        <span class="theme-dot" data-theme="paper"        style="background:#c0392b"  title="Paper"></span>
+        <span class="theme-dot" data-theme="latte"        style="background:#1e66f5"  title="Latte"></span>
+        <span class="theme-dot" data-theme="gruvbox-light"style="background:#b57614"  title="Gruvbox Light"></span>
+        <span class="theme-dot" data-theme="solarized"    style="background:#268bd2"  title="Solarized"></span>
+        <span class="theme-dot" data-theme="sepia"        style="background:#a05c20"  title="Sepia"></span>
       </div>
     </div>
 
-    <!-- Custom theme -->
-    <div class="settings-section">
-      <div class="settings-section-label">Custom Theme</div>
-      <div class="color-grid" id="color-grid"></div>
-      <button class="custom-theme-reset" id="custom-reset">Reset to current theme</button>
-    </div>
-
-    <!-- Font size -->
     <div class="settings-section">
       <div class="settings-section-label">FONT SIZE — PRIMARY</div>
-      <div class="fs-row">
-        <div style="display:flex;gap:7px;flex-wrap:wrap" id="fs-btns">
-          <button class="fs-btn" data-fs="14">14</button>
-          <button class="fs-btn" data-fs="18">18</button>
-          <button class="fs-btn active" data-fs="22">22</button>
-          <button class="fs-btn" data-fs="26">26</button>
-          <button class="fs-btn" data-fs="30">30</button>
-        </div>
-        <div class="fs-custom-wrap">
-          <input class="fs-custom-input" id="fs-custom-input" type="number" min="8" max="72" placeholder="px"/>
-          <span class="fs-custom-label">Custom px</span>
-        </div>
+      <div class="fs-row" id="fs-btns">
+        <button class="fs-btn" data-fs="14">14</button>
+        <button class="fs-btn" data-fs="16">16</button>
+        <button class="fs-btn" data-fs="18">18</button>
+        <button class="fs-btn active" data-fs="22">22</button>
+        <button class="fs-btn" data-fs="26">26</button>
+        <button class="fs-btn" data-fs="30">30</button>
+        <button class="fs-btn" data-fs="36">36</button>
+      </div>
+      <div class="fs-custom-row">
+        <input class="fs-custom-input" id="fs-custom-input" type="number" min="8" max="72" placeholder="px"/>
+        <span class="fs-custom-label">Custom px</span>
       </div>
     </div>
 
-    <!-- Options -->
     <div class="settings-section">
       <div class="settings-section-label">Options</div>
       <div class="toggle-row">
         <span class="toggle-label">Randomize sentence order</span>
-        <div class="toggle on" id="toggle-random"></div>
+        <div class="toggle" id="toggle-random" title="Toggle randomize"></div>
       </div>
     </div>
 
-    <!-- Shortcuts -->
     <div class="settings-section">
       <div class="settings-section-label">Keyboard Shortcuts</div>
-      <div class="key-row"><span class="key-label">Reveal</span><input class="key-input" id="key-reveal-input" value="Space" maxlength="10" readonly/></div>
+      <div class="key-row">
+        <span class="key-label">Reveal</span>
+        <input class="key-input" id="key-reveal-input" value="Space" maxlength="10" readonly/>
+      </div>
       <div style="height:8px"></div>
-      <div class="key-row"><span class="key-label">Next</span><input class="key-input" id="key-next-input" value="→" maxlength="10" readonly/></div>
+      <div class="key-row">
+        <span class="key-label">Next</span>
+        <input class="key-input" id="key-next-input" value="→" maxlength="10" readonly/>
+      </div>
       <div style="height:8px"></div>
-      <div class="key-row"><span class="key-label">Previous</span><input class="key-input" id="key-prev-input" value="←" maxlength="10" readonly/></div>
+      <div class="key-row">
+        <span class="key-label">Previous</span>
+        <input class="key-input" id="key-prev-input" value="←" maxlength="10" readonly/>
+      </div>
       <div style="height:8px"></div>
-      <div class="key-row"><span class="key-label">Speak (TTS)</span><input class="key-input" id="key-tts-input" value="S" maxlength="10" readonly/></div>
+      <div class="key-row">
+        <span class="key-label">Speak (TTS)</span>
+        <input class="key-input" id="key-tts-input" value="S" maxlength="10" readonly/>
+      </div>
       <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:10px">Click a field then press any key to remap.</div>
     </div>
+
   </div>
 </div>
 
 <!-- UPLOAD -->
 <div id="upload-overlay">
   <div id="upload-panel">
-    <div class="upload-title">Upload CSV<button class="settings-close" id="upload-close">✕</button></div>
+    <div class="upload-title">
+      Upload CSV
+      <button class="settings-close" id="upload-close">✕</button>
+    </div>
     <div class="upload-format">
       Required columns (header row required):<br>
       <code>language, level, english, translation, category</code><br><br>

@@ -1,47 +1,30 @@
 'use strict';
 
-/* ── Google Drive CSV URL ───────────────────────────────── */
-const GDRIVE_CSV = 'https://drive.google.com/uc?export=download&id=1Toz6anPncyRexhn6cgB9m16SnMOfExmp';
-
 /* ── State ──────────────────────────────────────────────── */
 const S = {
-  allRows:        [],
-  filtered:       [],
-  pool:           [],
-  poolIndex:      0,
-  languages:      [],
-  categories:     [],
-  lang:           'All',
-  level:          'All',
-  categories_sel: ['All'],
-  autoPlay:       true,
-  presMode:       false,
-  presRevealed:   false,
-  creatorFlip:    false,
-  revealed:       false,
-  randomize:      true,
-  theme:          'terminal',
-  fontSize:       22,
-  keyReveal:      ' ',
-  keyNext:        'ArrowRight',
-  keyPrev:        'ArrowLeft',
-  keyTTS:         's',
-  customVars:     {},
+  allRows:       [],
+  filtered:      [],
+  pool:          [],   // ordered/shuffled pool for stepping through
+  poolIndex:     0,
+  languages:     [],
+  categories:    [],
+  lang:          'All',
+  level:         'All',
+  categories_sel:['All'],
+  autoPlay:      true,   // mute button = auto-play on reveal toggle
+  presMode:      false,
+  presRevealed:  false,
+  creatorFlip:   false,
+  revealed:      false,
+  mirrored:      false,
+  randomize:     true,
+  theme:         'terminal',
+  fontSize:      22,
+  keyReveal:     ' ',
+  keyNext:       'ArrowRight',
+  keyPrev:       'ArrowLeft',
+  keyTTS:        's',
 };
-
-/* ── CSS custom-theme variables we expose ───────────────── */
-const COLOR_VARS = [
-  { key: '--bg',          label: 'Background' },
-  { key: '--bg2',         label: 'Background 2' },
-  { key: '--bg3',         label: 'Background 3' },
-  { key: '--border',      label: 'Border' },
-  { key: '--text',        label: 'Text' },
-  { key: '--text-dim',    label: 'Text Dim' },
-  { key: '--head',        label: 'Heading / Primary' },
-  { key: '--accent',      label: 'Accent / Highlight' },
-  { key: '--card-bg',     label: 'Card Background' },
-  { key: '--card-border', label: 'Card Border' },
-];
 
 /* ── DOM ─────────────────────────────────────────────────── */
 const $  = id  => document.getElementById(id);
@@ -65,7 +48,7 @@ function scramble(el, text, ms, cb) {
   });
 }
 
-/* ── CSV parser ──────────────────────────────────────────── */
+/* ── CSV ─────────────────────────────────────────────────── */
 function splitCSV(line) {
   const r = []; let cur = '', q = false;
   for (const ch of line) {
@@ -78,41 +61,30 @@ function splitCSV(line) {
 }
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
-  const hdr   = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^\uFEFF/, ''));
+  const hdr   = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^\uFEFF/,''));
   return lines.slice(1).map(l => {
     const cols = splitCSV(l), row = {};
-    hdr.forEach((h, i) => row[h] = (cols[i] || '').trim().replace(/^"|"$/g, '').trim());
+    hdr.forEach((h, i) => row[h] = (cols[i]||'').trim().replace(/^"|"$/g,'').trim());
     return row;
   }).filter(r => r.language && r.level && r.english && r.translation && r.category);
 }
 
-/* ── Load CSV (GDrive first, fallback to local) ─────────── */
+/* ── Load CSV ────────────────────────────────────────────── */
 async function loadDefaultCSV() {
-  // Try Google Drive
   try {
-    const res = await fetch(GDRIVE_CSV);
-    if (res.ok) {
-      const text = await res.text();
-      // Google drive returns HTML warning page for large files - detect it
-      if (text.trim().startsWith('<')) throw new Error('HTML response - not CSV');
-      const rows = parseCSV(text);
-      if (rows.length) { S.allRows = rows; init(); return; }
-    }
-  } catch(e) { /* fall through */ }
-
-  // Fallback: local file
-  try {
+    // try relative path (works for file:// and http/https served)
     const res  = await fetch('./data/sentences.csv');
-    if (!res.ok) throw new Error('local not found');
+    if (!res.ok) throw new Error('not ok');
     const text = await res.text();
-    const rows = parseCSV(text);
-    if (rows.length) { S.allRows = rows; init(); return; }
-  } catch(e) { /* fall through */ }
-
-  // Nothing loaded — show empty state with upload prompt
-  $('empty-state').textContent = 'No sentences loaded. Upload a CSV using the CSV button above.';
-  $('empty-state').classList.add('active');
-  init(); // still init so UI works
+    S.allRows  = parseCSV(text);
+    if (!S.allRows.length) throw new Error('empty');
+    init();
+  } catch (e) {
+    $('empty-state').textContent = 'Could not load data/sentences.csv — upload a CSV or serve via a local server.';
+    $('empty-state').classList.add('active');
+    // still init UI so controls work for upload
+    init();
+  }
 }
 
 /* ── Init ────────────────────────────────────────────────── */
@@ -120,7 +92,6 @@ function init() {
   loadSettings();
   buildLangOptions();
   buildCategoryChips();
-  buildColorPickers();
   applyFilters();
   buildPool();
   renderCard();
@@ -176,26 +147,26 @@ function applyFilters() {
     r = r.filter(x => S.categories_sel.includes(x.category));
   S.filtered = r;
   $('stats-text').innerHTML = S.filtered.length
-    ? `<span>${S.filtered.length}</span> sentences &nbsp;·&nbsp; <span>${new Set(S.filtered.map(r => r.category)).size}</span> categories`
+    ? `<span>${S.filtered.length}</span> sentences &nbsp;·&nbsp; <span>${new Set(S.filtered.map(r=>r.category)).size}</span> categories`
     : '';
 }
 
-/* ── Pool ────────────────────────────────────────────────── */
+/* ── Pool (ordered or shuffled) ──────────────────────────── */
 function shuffle(a) {
   const b = [...a];
-  for (let i = b.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [b[i], b[j]] = [b[j], b[i]];
+  for (let i = b.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [b[i],b[j]] = [b[j],b[i]];
   }
   return b;
 }
 function buildPool() {
-  S.pool      = S.randomize ? shuffle(S.filtered) : [...S.filtered];
+  S.pool = S.randomize ? shuffle(S.filtered) : [...S.filtered];
   S.poolIndex = 0;
 }
 function currentRow() { return S.pool[S.poolIndex] || null; }
 
-/* ── Card ────────────────────────────────────────────────── */
+/* ── Card render ─────────────────────────────────────────── */
 function renderCard() {
   const row  = currentRow();
   const grid = $('cards-grid');
@@ -218,10 +189,10 @@ function renderCard() {
         <span>${row.category}</span>
         <span>${row.language}</span>
       </div>
-      <div class="card-primary" id="card-primary" style="font-size:${S.fontSize}px">${esc(primary)}</div>
-      <div class="card-secondary hidden" id="card-secondary" style="font-size:${S.fontSize}px">&nbsp;</div>
-      <div class="card-hint" id="card-hint">Click to reveal</div>
-      <button class="card-tts" id="card-tts-btn" title="Speak">
+      <div class="card-primary" id="card-primary">${esc(primary)}</div>
+      <div class="card-secondary hidden" id="card-secondary">&nbsp;</div>
+      <div class="card-hint" id="card-hint">press Space or click to reveal</div>
+      <button class="card-tts" id="card-tts-btn" title="Speak (${keyLabel(S.keyTTS)})">
         <svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
       </button>
     </div>`;
@@ -232,16 +203,17 @@ function renderCard() {
   });
   $('card-tts-btn').addEventListener('click', e => { e.stopPropagation(); speakCurrent(); });
 
+  // update present mode if open
   if (S.presMode) renderPresCard();
 }
 
 function revealCard() {
   if (S.revealed) return;
   S.revealed = true;
-  const row = currentRow(); if (!row) return;
+  const row       = currentRow(); if (!row) return;
   const secondary = S.creatorFlip ? row.english : row.translation;
-  const sec  = $('card-secondary');
-  const hint = $('card-hint');
+  const sec       = $('card-secondary');
+  const hint      = $('card-hint');
   sec.classList.remove('hidden');
   scramble(sec, secondary, 360, () => {
     if (S.autoPlay) speak(secondary, row.language);
@@ -281,7 +253,7 @@ function speakCurrent() {
 
 /* ── Present mode ────────────────────────────────────────── */
 function enterPres() {
-  S.presMode     = true;
+  S.presMode    = true;
   S.presRevealed = false;
   $('presentation-mode').classList.add('active');
   $('streamer-btn').classList.add('active');
@@ -304,9 +276,16 @@ function renderPresCard() {
   pSec.textContent = secondary;
   S.presRevealed = false;
 
+  // Apply font size
   pPrim.style.fontSize = S.fontSize + 'px';
   pSec.style.fontSize  = S.fontSize + 'px';
-  $('pres-progress-bar').style.width = ((S.poolIndex + 1) / S.pool.length * 100) + '%';
+
+  // Mirror
+  pPrim.classList.toggle('pres-mirrored', S.mirrored);
+  pSec.classList.toggle('pres-mirrored',  S.mirrored);
+
+  // Progress
+  $('pres-progress-bar').style.width = ((S.poolIndex+1) / S.pool.length * 100) + '%';
 }
 function presReveal() {
   if (S.presRevealed) return;
@@ -322,163 +301,53 @@ function presReveal() {
 function presNext() { goNext(); S.presRevealed = false; renderPresCard(); }
 function presPrev() { goPrev(); S.presRevealed = false; renderPresCard(); }
 
-/* ── Mute / auto-play toggle ─────────────────────────────── */
+/* ── Mute (auto-play) toggle ─────────────────────────────── */
 const ICON_ON  = `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
 const ICON_OFF = `<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>`;
 function syncMuteBtn() {
   $('mute-icon').innerHTML = S.autoPlay ? ICON_ON : ICON_OFF;
   $('mute-btn').classList.toggle('active', !S.autoPlay);
-  $('mute-btn').title = S.autoPlay ? 'Auto-play ON — click to disable' : 'Auto-play OFF — click to enable';
+  $('mute-btn').title = S.autoPlay ? 'Auto-play on: click to disable' : 'Auto-play off: click to enable';
 }
 
-/* ── Theme ───────────────────────────────────────────────── */
+/* ── Theme / Font ────────────────────────────────────────── */
 function applyTheme(name) {
   S.theme = name;
-  const root = document.documentElement;
-  if (name === 'terminal') delete root.dataset.theme;
-  else root.dataset.theme = name;
+  const el = document.documentElement;
+  if (name === 'terminal') delete el.dataset.theme;
+  else el.dataset.theme = name;
   $$('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === name));
-  // Re-read computed vars into pickers
-  syncColorPickers();
   saveSettings();
 }
 
-/* ── Font size ───────────────────────────────────────────── */
 function applyFontSize(px) {
   S.fontSize = Math.max(8, Math.min(72, parseInt(px) || 22));
   $$('.fs-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.fs) === S.fontSize));
-  const known = [14, 18, 22, 26, 30];
+  const known = [14,16,18,22,26,30,36];
   $('fs-custom-input').value = known.includes(S.fontSize) ? '' : S.fontSize;
   renderCard();
   saveSettings();
 }
 
-/* ── Custom color pickers ────────────────────────────────── */
-function buildColorPickers() {
-  const grid = $('color-grid'); if (!grid) return;
-  grid.innerHTML = '';
-  COLOR_VARS.forEach(({ key, label }) => {
-    const row = document.createElement('div');
-    row.className = 'color-row';
-    row.innerHTML = `
-      <span class="color-label">${label}</span>
-      <div class="color-swatch" id="swatch-${key.replace(/--/g,'').replace(/-/g,'_')}">
-        <input type="color" data-var="${key}" title="${key}"/>
-      </div>
-      <input type="text" class="color-hex" data-var="${key}" maxlength="7" placeholder="#000000"/>
-    `;
-    grid.appendChild(row);
-
-    const picker = row.querySelector('input[type=color]');
-    const hex    = row.querySelector('.color-hex');
-    const swatch = row.querySelector('.color-swatch');
-
-    picker.addEventListener('input', () => {
-      const v = picker.value;
-      hex.value = v.toUpperCase();
-      swatch.style.background = v;
-      setCustomVar(key, v);
-    });
-    hex.addEventListener('change', () => {
-      const v = normalizeHex(hex.value);
-      if (!v) return;
-      hex.value = v.toUpperCase();
-      picker.value = v;
-      swatch.style.background = v;
-      setCustomVar(key, v);
-    });
-  });
-  syncColorPickers();
-}
-
-function syncColorPickers() {
-  const computed = getComputedStyle(document.documentElement);
-  COLOR_VARS.forEach(({ key }) => {
-    const raw   = computed.getPropertyValue(key).trim();
-    const hex   = cssColorToHex(raw) || '#000000';
-    const id    = 'swatch-' + key.replace(/--/g,'').replace(/-/g,'_');
-    const sw    = $(id); if (!sw) return;
-    sw.style.background = hex;
-    const picker = sw.querySelector('input[type=color]');
-    const hexEl  = sw.parentElement.querySelector('.color-hex');
-    if (picker) picker.value = hex;
-    if (hexEl)  hexEl.value  = hex.toUpperCase();
-    // If we have a custom var for this key, apply it
-    if (S.customVars[key]) {
-      setCustomVar(key, S.customVars[key], false);
-    }
-  });
-}
-
-function setCustomVar(key, value, save = true) {
-  document.documentElement.style.setProperty(key, value);
-  S.customVars[key] = value;
-  if (save) saveSettings();
-}
-
-function resetCustomVars() {
-  COLOR_VARS.forEach(({ key }) => {
-    document.documentElement.style.removeProperty(key);
-  });
-  S.customVars = {};
-  syncColorPickers();
-  saveSettings();
-}
-
-function normalizeHex(val) {
-  val = val.trim().replace(/^#/, '');
-  if (val.length === 3) val = val.split('').map(c => c+c).join('');
-  if (val.length !== 6) return null;
-  if (!/^[0-9a-fA-F]{6}$/.test(val)) return null;
-  return '#' + val;
-}
-
-function cssColorToHex(color) {
-  // handles #hex and rgb()
-  if (!color) return null;
-  color = color.trim();
-  if (color.startsWith('#')) {
-    const h = normalizeHex(color);
-    return h;
-  }
-  const m = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-  if (m) {
-    return '#' + [m[1],m[2],m[3]].map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
-  }
-  return null;
-}
-
 /* ── Settings persist ────────────────────────────────────── */
 function loadSettings() {
   try {
-    const s = JSON.parse(localStorage.getItem('ll_v2') || '{}');
+    const s = JSON.parse(localStorage.getItem('ll_v1') || '{}');
     if (s.theme)      applyTheme(s.theme);
-    if (s.fontSize)   S.fontSize   = s.fontSize;
+    if (s.fontSize)   { S.fontSize   = s.fontSize; }
     if (s.keyReveal !== undefined) S.keyReveal = s.keyReveal;
     if (s.keyNext   !== undefined) S.keyNext   = s.keyNext;
     if (s.keyPrev   !== undefined) S.keyPrev   = s.keyPrev;
     if (s.keyTTS    !== undefined) S.keyTTS    = s.keyTTS;
     if (s.randomize !== undefined) S.randomize = s.randomize;
     if (s.autoPlay  !== undefined) S.autoPlay  = s.autoPlay;
-    if (s.customVars) {
-      S.customVars = s.customVars;
-      Object.entries(S.customVars).forEach(([k, v]) => {
-        document.documentElement.style.setProperty(k, v);
-      });
-    }
   } catch(e) {}
 }
 function saveSettings() {
-  localStorage.setItem('ll_v2', JSON.stringify({
-    theme:      S.theme,
-    fontSize:   S.fontSize,
-    keyReveal:  S.keyReveal,
-    keyNext:    S.keyNext,
-    keyPrev:    S.keyPrev,
-    keyTTS:     S.keyTTS,
-    randomize:  S.randomize,
-    autoPlay:   S.autoPlay,
-    customVars: S.customVars,
+  localStorage.setItem('ll_v1', JSON.stringify({
+    theme: S.theme, fontSize: S.fontSize,
+    keyReveal: S.keyReveal, keyNext: S.keyNext, keyPrev: S.keyPrev, keyTTS: S.keyTTS,
+    randomize: S.randomize, autoPlay: S.autoPlay,
   }));
 }
 
@@ -496,6 +365,7 @@ function syncSettingsUI() {
   Object.entries(keys).forEach(([id, val]) => {
     const el = $(id); if (el) el.value = keyLabel(val);
   });
+  updateShortcutLabels();
   updateKeyHints();
 }
 
@@ -503,17 +373,19 @@ function syncToggle(id, val) {
   const el = $(id); if (el) el.classList.toggle('on', val);
 }
 
-/* ── Key helpers ─────────────────────────────────────────── */
 function keyLabel(k) {
-  if (!k || k === ' ')     return 'Space';
+  if (k === ' ')           return 'Space';
   if (k === 'ArrowRight')  return '→';
   if (k === 'ArrowLeft')   return '←';
   if (k === 'ArrowUp')     return '↑';
   if (k === 'ArrowDown')   return '↓';
-  return k.length === 1 ? k.toUpperCase() : k;
+  return k.toUpperCase();
 }
-function matchKey(e, k) {
-  return e.key === k || (k.length === 1 && e.key.toLowerCase() === k.toLowerCase());
+
+function updateShortcutLabels() {
+  const r = $('reveal-shortcut-label');  if (r) r.textContent = keyLabel(S.keyReveal);
+  const pr = $('pres-reveal-shortcut');  if (pr) pr.textContent = keyLabel(S.keyReveal);
+  const pt = $('pres-tts-shortcut');     if (pt) pt.textContent = keyLabel(S.keyTTS);
 }
 function updateKeyHints() {
   const m = {
@@ -526,17 +398,27 @@ function updateKeyHints() {
 }
 
 /* ── Keyboard ────────────────────────────────────────────── */
+function matchKey(e, k) {
+  if (k === ' ')          return e.key === ' ';
+  if (k === 'ArrowRight') return e.key === 'ArrowRight';
+  if (k === 'ArrowLeft')  return e.key === 'ArrowLeft';
+  if (k === 'ArrowUp')    return e.key === 'ArrowUp';
+  if (k === 'ArrowDown')  return e.key === 'ArrowDown';
+  return e.key.toLowerCase() === k.toLowerCase();
+}
+
 function handleKey(e) {
   if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
 
   if (S.presMode) {
-    if (e.key === 'Escape')           { exitPres(); return; }
-    if (matchKey(e, S.keyReveal))     { e.preventDefault(); presReveal();    return; }
-    if (matchKey(e, S.keyNext))       { e.preventDefault(); presNext();      return; }
-    if (matchKey(e, S.keyPrev))       { e.preventDefault(); presPrev();      return; }
-    if (matchKey(e, S.keyTTS))        { e.preventDefault(); speakCurrent();  return; }
+    if (e.key === 'Escape')            { exitPres(); return; }
+    if (matchKey(e, S.keyReveal))      { e.preventDefault(); presReveal(); return; }
+    if (matchKey(e, S.keyNext))        { e.preventDefault(); presNext();   return; }
+    if (matchKey(e, S.keyPrev))        { e.preventDefault(); presPrev();   return; }
+    if (matchKey(e, S.keyTTS))         { e.preventDefault(); speakCurrent(); return; }
     return;
   }
+
   if (e.key === 'Escape') {
     $('settings-overlay').classList.remove('active');
     $('upload-overlay').classList.remove('active');
@@ -574,22 +456,22 @@ function handleUpload(file) {
 
 /* ── Attach events ───────────────────────────────────────── */
 function attachEvents() {
-  $('lang-sel').addEventListener('change',  e => { S.lang  = e.target.value; applyFilters(); buildPool(); renderCard(); });
+  $('lang-sel').addEventListener('change', e  => { S.lang  = e.target.value; applyFilters(); buildPool(); renderCard(); });
   $('level-sel').addEventListener('change', e => { S.level = e.target.value; applyFilters(); buildPool(); renderCard(); });
 
   $('mute-btn').addEventListener('click', () => { S.autoPlay = !S.autoPlay; syncMuteBtn(); saveSettings(); });
   $('streamer-btn').addEventListener('click', () => S.presMode ? exitPres() : enterPres());
 
-  $('settings-btn').addEventListener('click',   () => { $('settings-overlay').classList.add('active'); syncColorPickers(); });
+  $('settings-btn').addEventListener('click',  () => $('settings-overlay').classList.add('active'));
   $('settings-close').addEventListener('click', () => $('settings-overlay').classList.remove('active'));
   $('settings-overlay').addEventListener('click', e => { if (e.target === $('settings-overlay')) $('settings-overlay').classList.remove('active'); });
 
-  $('upload-btn').addEventListener('click',   () => $('upload-overlay').classList.add('active'));
+  $('upload-btn').addEventListener('click',  () => $('upload-overlay').classList.add('active'));
   $('upload-close').addEventListener('click', () => $('upload-overlay').classList.remove('active'));
   $('upload-overlay').addEventListener('click', e => { if (e.target === $('upload-overlay')) $('upload-overlay').classList.remove('active'); });
   $('upload-file-input').addEventListener('change', e => { if (e.target.files[0]) handleUpload(e.target.files[0]); });
   const drop = $('upload-drop');
-  drop.addEventListener('click',    () => $('upload-file-input').click());
+  drop.addEventListener('click', () => $('upload-file-input').click());
   drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('dragover'); });
   drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
   drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]); });
@@ -602,13 +484,14 @@ function attachEvents() {
     if (v >= 8 && v <= 72) { $$('.fs-btn').forEach(b => b.classList.remove('active')); applyFontSize(v); }
   });
 
+  // Randomize toggle
   $('toggle-random').addEventListener('click', () => {
     S.randomize = !S.randomize;
     syncToggle('toggle-random', S.randomize);
-    buildPool(); renderCard(); saveSettings();
+    buildPool();
+    renderCard();
+    saveSettings();
   });
-
-  $('custom-reset').addEventListener('click', resetCustomVars);
 
   // Key remap
   function remapKey(inputId, stateKey) {
@@ -616,6 +499,7 @@ function attachEvents() {
       e.preventDefault();
       S[stateKey] = e.key;
       e.target.value = keyLabel(e.key);
+      updateShortcutLabels();
       updateKeyHints();
       saveSettings();
     });
@@ -625,7 +509,7 @@ function attachEvents() {
   remapKey('key-prev-input',   'keyPrev');
   remapKey('key-tts-input',    'keyTTS');
 
-  // Controls
+  // Controls row
   $('prev-btn').addEventListener('click',   goPrev);
   $('next-btn').addEventListener('click',   goNext);
   $('reveal-btn').addEventListener('click', revealCard);
@@ -634,18 +518,30 @@ function attachEvents() {
     $('flip-label').textContent = S.creatorFlip ? 'Target → EN' : 'EN → Target';
     renderCard();
   });
+  $('mirror-btn').addEventListener('click', () => {
+    S.mirrored = !S.mirrored;
+    $('mirror-btn').classList.toggle('active', S.mirrored);
+    if (S.presMode) renderPresCard();
+  });
 
   // Present controls
   $('pres-reveal-btn').addEventListener('click', presReveal);
   $('pres-next-btn').addEventListener('click',   presNext);
   $('pres-prev-btn').addEventListener('click',   presPrev);
   $('pres-tts-btn').addEventListener('click',    speakCurrent);
-  $('pres-exit-btn').addEventListener('click',   exitPres);
+  $('pres-mirror-btn').addEventListener('click', () => {
+    S.mirrored = !S.mirrored;
+    $('pres-mirror-btn').classList.toggle('active', S.mirrored);
+    $('mirror-btn').classList.toggle('active', S.mirrored);
+    renderPresCard();
+  });
+  $('pres-exit-btn').addEventListener('click', exitPres);
 
   document.addEventListener('keydown', handleKey);
 
   syncSettingsUI();
-  syncColorPickers();
+
+  // Show controls row always (they're the nav even outside pres mode)
   $('controls-row').style.display = 'flex';
 }
 
