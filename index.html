@@ -3,17 +3,16 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Terminal Lingo</title>
+  <title>Lexloom</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
 <!-- TOP BAR -->
 <div id="topbar">
-
   <div class="tb-group">
     <a class="logo" href="#">
-      <span class="logo-dot"></span>Terminal Lingo
+      <span class="logo-dot"></span>Lexloom
     </a>
     <div class="bar-sep"></div>
     <span class="bar-label">Lang</span>
@@ -33,14 +32,18 @@
   <div class="tb-group">
     <a class="bar-text-btn bmc" href="https://buymeacoffee.com/leauspaz" target="_blank" rel="noopener">☕ BMC</a>
     <button class="bar-text-btn" id="upload-btn">
-      <svg style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       CSV
     </button>
     <div class="bar-sep"></div>
-    <button class="bar-btn" id="mute-btn" title="Sound on/off">
-      <svg id="mute-icon" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    <button class="bar-btn" id="mute-btn" title="Toggle auto-play on reveal">
+      <svg id="mute-icon" viewBox="0 0 24 24">
+        <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+      </svg>
     </button>
-    <button class="bar-btn" id="streamer-btn" title="Streamer / Creator Mode">
+    <button class="bar-btn" id="streamer-btn" title="Present Mode">
       <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
     </button>
     <button class="bar-btn" id="settings-btn" title="Settings">
@@ -51,43 +54,37 @@
 
 <!-- MAIN -->
 <div id="main">
-
-  <!-- Category chips (hidden in streamer mode) -->
   <div id="filter-bar">
     <span class="filter-label">Category</span>
-    <div id="cat-chips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    <div id="cat-chips" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
   </div>
-
-  <!-- Stats (hidden in streamer mode) -->
   <div id="stats-bar"><span id="stats-text"></span></div>
-
-  <!-- Card -->
   <div id="cards-grid"></div>
   <div id="empty-state">No sentences match your filters.</div>
-
-  <!-- Controls (streamer mode only) -->
   <div id="controls-row">
-    <button class="ctrl-btn primary" id="next-btn">
-      <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      Next
+    <button class="ctrl-btn" id="prev-btn">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Prev <span class="ctrl-shortcut">←</span>
     </button>
-    <button class="ctrl-btn" id="reveal-btn">
+    <button class="ctrl-btn primary" id="reveal-btn">
       <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      Reveal <span class="ctrl-shortcut" id="reveal-shortcut-label">R</span>
+      Reveal <span class="ctrl-shortcut" id="reveal-shortcut-label">Space</span>
+    </button>
+    <button class="ctrl-btn" id="next-btn">
+      Next <span class="ctrl-shortcut">→</span>
+      <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </button>
     <button class="ctrl-btn" id="flip-btn">
       <svg viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
       <span id="flip-label">EN → Target</span>
     </button>
-    <button class="ctrl-btn" id="pres-enter-btn">
-      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-      Present
+    <button class="ctrl-btn" id="mirror-btn" title="Mirror text">
+      <svg viewBox="0 0 24 24"><path d="M12 3v18M3 7l4 5-4 5M21 7l-4 5 4 5"/></svg>
     </button>
   </div>
-
 </div>
 
-<!-- PRESENTATION MODE -->
+<!-- PRESENT / STREAMER MODE overlay -->
 <div id="presentation-mode">
   <div class="pres-meta" id="pres-meta"></div>
   <div class="pres-primary" id="pres-primary"></div>
@@ -95,23 +92,29 @@
   <div class="pres-controls">
     <button class="ctrl-btn" id="pres-prev-btn">
       <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      <span class="ctrl-shortcut">←</span>
     </button>
     <button class="ctrl-btn primary" id="pres-reveal-btn">
       <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      Reveal
+      Reveal <span class="ctrl-shortcut" id="pres-reveal-shortcut">Space</span>
     </button>
     <button class="ctrl-btn" id="pres-next-btn">
+      <span class="ctrl-shortcut">→</span>
       <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </button>
-    <button class="ctrl-btn" id="mirror-btn" title="Mirror">
+    <button class="ctrl-btn" id="pres-tts-btn" title="Speak">
+      <svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      <span class="ctrl-shortcut" id="pres-tts-shortcut">S</span>
+    </button>
+    <button class="ctrl-btn" id="pres-mirror-btn" title="Mirror">
       <svg viewBox="0 0 24 24"><path d="M12 3v18M3 7l4 5-4 5M21 7l-4 5 4 5"/></svg>
     </button>
-    <button class="ctrl-btn" id="pres-exit-btn">✕ Exit</button>
+    <button class="ctrl-btn" id="pres-exit-btn">✕ Exit <span class="ctrl-shortcut">Esc</span></button>
   </div>
   <div class="pres-progress"><div class="pres-progress-bar" id="pres-progress-bar" style="width:0%"></div></div>
 </div>
 
-<!-- SETTINGS OVERLAY -->
+<!-- SETTINGS -->
 <div id="settings-overlay">
   <div id="settings-panel">
     <div class="settings-title">
@@ -119,68 +122,87 @@
       <button class="settings-close" id="settings-close">✕</button>
     </div>
 
-    <!-- Themes: Dark -->
     <div class="settings-section">
       <div class="settings-section-label">Theme — Dark</div>
-      <div class="theme-dots" id="theme-dots-dark">
-        <span class="theme-dot active" data-theme="terminal" style="background:#e7ff00" title="Terminal Green"></span>
-        <span class="theme-dot" data-theme="amber"   style="background:#ffb300" title="Amber"></span>
-        <span class="theme-dot" data-theme="arctic"  style="background:#4fc3f7" title="Arctic Blue"></span>
-        <span class="theme-dot" data-theme="rose"    style="background:#f48fb1" title="Rose Gold"></span>
-        <span class="theme-dot" data-theme="obsidian"style="background:#bf5af2" title="Obsidian"></span>
-        <span class="theme-dot" data-theme="forest"  style="background:#50e070" title="Forest"></span>
-        <span class="theme-dot" data-theme="steel"   style="background:#7090e8" title="Steel"></span>
-        <span class="theme-dot" data-theme="chalk"   style="background:#89b4fa" title="Chalk"></span>
-        <span class="theme-dot" data-theme="mocha"   style="background:#e78a4e" title="Mocha"></span>
+      <div class="theme-dots">
+        <span class="theme-dot active" data-theme="terminal"   style="background:#e7ff00"  title="Terminal"></span>
+        <span class="theme-dot"        data-theme="amber"      style="background:#ffb300"  title="Amber"></span>
+        <span class="theme-dot"        data-theme="arctic"     style="background:#4fc3f7"  title="Arctic"></span>
+        <span class="theme-dot"        data-theme="rose"       style="background:#f48fb1"  title="Rose Gold"></span>
+        <span class="theme-dot"        data-theme="obsidian"   style="background:#bf5af2"  title="Obsidian"></span>
+        <span class="theme-dot"        data-theme="forest"     style="background:#50e070"  title="Forest"></span>
+        <span class="theme-dot"        data-theme="steel"      style="background:#7090e8"  title="Steel"></span>
+        <span class="theme-dot"        data-theme="dracula"    style="background:#ff79c6"  title="Dracula"></span>
+        <span class="theme-dot"        data-theme="gruvbox"    style="background:#b8bb26"  title="Gruvbox"></span>
+        <span class="theme-dot"        data-theme="mocha"      style="background:#e78a4e"  title="Mocha"></span>
+        <span class="theme-dot"        data-theme="catppuccin" style="background:#89b4fa"  title="Catppuccin"></span>
+        <span class="theme-dot"        data-theme="sonokai"    style="background:#9ed072"  title="Sonokai"></span>
+        <span class="theme-dot"        data-theme="nord"       style="background:#88c0d0"  title="Nord"></span>
       </div>
-      <div class="settings-section-label" style="margin-top:10px">Theme — Light</div>
-      <div class="theme-dots" id="theme-dots-light">
-        <span class="theme-dot" data-theme="ivory" style="background:#8b4513" title="Ivory"></span>
-        <span class="theme-dot" data-theme="paper" style="background:#c0392b" title="Paper"></span>
+      <div class="settings-section-label" style="margin-top:12px">Theme — Light</div>
+      <div class="theme-dots">
+        <span class="theme-dot" data-theme="ivory"        style="background:#8b4513"  title="Ivory"></span>
+        <span class="theme-dot" data-theme="paper"        style="background:#c0392b"  title="Paper"></span>
+        <span class="theme-dot" data-theme="latte"        style="background:#1e66f5"  title="Latte"></span>
+        <span class="theme-dot" data-theme="gruvbox-light"style="background:#b57614"  title="Gruvbox Light"></span>
+        <span class="theme-dot" data-theme="solarized"    style="background:#268bd2"  title="Solarized"></span>
+        <span class="theme-dot" data-theme="sepia"        style="background:#a05c20"  title="Sepia"></span>
       </div>
     </div>
 
-    <!-- Font Size -->
     <div class="settings-section">
       <div class="settings-section-label">FONT SIZE — PRIMARY</div>
       <div class="fs-row" id="fs-btns">
-        <button class="fs-btn active" data-fs="18">18</button>
         <button class="fs-btn" data-fs="14">14</button>
         <button class="fs-btn" data-fs="16">16</button>
-        <button class="fs-btn" data-fs="20">20</button>
-        <button class="fs-btn" data-fs="24">24</button>
-        <button class="fs-btn" data-fs="28">28</button>
-        <button class="fs-btn" data-fs="32">32</button>
+        <button class="fs-btn" data-fs="18">18</button>
+        <button class="fs-btn active" data-fs="22">22</button>
+        <button class="fs-btn" data-fs="26">26</button>
+        <button class="fs-btn" data-fs="30">30</button>
+        <button class="fs-btn" data-fs="36">36</button>
       </div>
       <div class="fs-custom-row">
-        <input class="fs-custom-input" id="fs-custom-input" type="number" min="8" max="72" placeholder="px" />
+        <input class="fs-custom-input" id="fs-custom-input" type="number" min="8" max="72" placeholder="px"/>
         <span class="fs-custom-label">Custom px</span>
       </div>
     </div>
 
-    <!-- Keyboard shortcuts -->
+    <div class="settings-section">
+      <div class="settings-section-label">Options</div>
+      <div class="toggle-row">
+        <span class="toggle-label">Randomize sentence order</span>
+        <div class="toggle" id="toggle-random" title="Toggle randomize"></div>
+      </div>
+    </div>
+
     <div class="settings-section">
       <div class="settings-section-label">Keyboard Shortcuts</div>
       <div class="key-row">
-        <span class="key-label">Reveal card</span>
-        <input class="key-input" id="key-reveal-input" value="R" maxlength="10" readonly/>
+        <span class="key-label">Reveal</span>
+        <input class="key-input" id="key-reveal-input" value="Space" maxlength="10" readonly/>
       </div>
       <div style="height:8px"></div>
       <div class="key-row">
-        <span class="key-label">Next card</span>
-        <input class="key-input" id="key-next-input" value="Space" maxlength="10" readonly/>
+        <span class="key-label">Next</span>
+        <input class="key-input" id="key-next-input" value="→" maxlength="10" readonly/>
       </div>
-      <div class="key-row" style="margin-top:8px">
-        <span class="key-label">Play TTS</span>
-        <input class="key-input" id="key-tts-input" value="T" maxlength="10" readonly/>
+      <div style="height:8px"></div>
+      <div class="key-row">
+        <span class="key-label">Previous</span>
+        <input class="key-input" id="key-prev-input" value="←" maxlength="10" readonly/>
       </div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-top:8px">Click a field then press any key to remap.</div>
+      <div style="height:8px"></div>
+      <div class="key-row">
+        <span class="key-label">Speak (TTS)</span>
+        <input class="key-input" id="key-tts-input" value="S" maxlength="10" readonly/>
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:10px">Click a field then press any key to remap.</div>
     </div>
 
   </div>
 </div>
 
-<!-- UPLOAD OVERLAY -->
+<!-- UPLOAD -->
 <div id="upload-overlay">
   <div id="upload-panel">
     <div class="upload-title">
@@ -204,10 +226,11 @@
 
 <!-- KEY HINTS -->
 <div id="key-hints">
-  <span class="key-hint-item"><span class="key-hint-key" id="hint-reveal-key">R</span> reveal</span>
-  <span class="key-hint-item"><span class="key-hint-key" id="hint-next-key">Space</span> next</span>
-  <span class="key-hint-item"><span class="key-hint-key" id="hint-tts-key">T</span> speak</span>
-  <span class="key-hint-item"><span class="key-hint-key">Esc</span> close</span>
+  <span class="key-hint-item"><span class="key-hint-key" id="hint-reveal-key">Space</span> reveal</span>
+  <span class="key-hint-item"><span class="key-hint-key" id="hint-next-key">→</span> next</span>
+  <span class="key-hint-item"><span class="key-hint-key" id="hint-prev-key">←</span> prev</span>
+  <span class="key-hint-item"><span class="key-hint-key" id="hint-tts-key">S</span> speak</span>
+  <span class="key-hint-item"><span class="key-hint-key">Esc</span> exit</span>
 </div>
 
 <script src="app.js"></script>
