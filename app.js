@@ -364,9 +364,11 @@ function renderPresCard() {
   const secondary = S.creatorFlip ? row.english : row.translation;
   const pPrim = $('pres-primary'), pSec = $('pres-secondary');
   $('pres-meta').innerHTML = `
-  <span class="pres-level">${row.level}</span>
-  <span class="pres-lang">${row.language}</span>
-  <span class="pres-cat">${row.category}</span>`;
+  <div style="display:flex;gap:24px">
+    <span class="pres-level">${row.level}</span>
+    <span>${row.language}</span>
+  </div>
+  <div>${row.category}</div>`;
   scramble(pPrim, primary, 400);
   pSec.classList.add('hidden');
   pSec.textContent = secondary;
