@@ -6,12 +6,8 @@
   <title>Lexloom</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="icon" type="image/png" href="favicon.png">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
 <body>
-
-<!-- Custom cursor -->
-<div id="cursor"></div>
 
 <div id="topbar">
   <div class="tb-group">
@@ -20,11 +16,15 @@
     </a>
     <div class="bar-sep"></div>
     <span class="bar-label">Lang</span>
-    <!-- custom dropdown built by JS -->
-    <div id="lang-dropdown" class="custom-select"></div>
+    <select class="bar-select" id="lang-sel"><option value="All">All</option></select>
     <div class="bar-sep"></div>
     <span class="bar-label">Level</span>
-    <div id="level-dropdown" class="custom-select"></div>
+    <select class="bar-select" id="level-sel">
+      <option value="All">All</option>
+      <option value="A1">A1</option><option value="A2">A2</option>
+      <option value="B1">B1</option><option value="B2">B2</option>
+      <option value="C1">C1</option><option value="C2">C2</option>
+    </select>
   </div>
   <div class="tb-spacer"></div>
   <div class="tb-group">
@@ -53,20 +53,23 @@
 <div id="main">
   <div id="filter-bar">
     <span class="filter-label">Category</span>
-    <div id="cat-chips"></div>
+    <div id="cat-chips" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
   </div>
   <div id="stats-bar"><span id="stats-text"></span></div>
   <div id="cards-grid"></div>
-  <div id="empty-state">No sentences loaded. Upload a CSV or wait for the default to load.</div>
+  <div id="empty-state">No sentences match your filters.</div>
   <div id="controls-row">
     <button class="ctrl-btn" id="prev-btn">
-      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>Prev
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Prev
     </button>
     <button class="ctrl-btn primary" id="reveal-btn">
-      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Reveal
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      Reveal
     </button>
     <button class="ctrl-btn" id="next-btn">
-      Next<svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      Next
+      <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </button>
     <button class="ctrl-btn" id="flip-btn">
       <svg viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
@@ -81,11 +84,16 @@
   <div class="pres-primary" id="pres-primary"></div>
   <div class="pres-secondary hidden" id="pres-secondary"></div>
   <div class="pres-controls">
-    <button class="ctrl-btn" id="pres-prev-btn"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
-    <button class="ctrl-btn primary" id="pres-reveal-btn">
-      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Reveal
+    <button class="ctrl-btn" id="pres-prev-btn">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
-    <button class="ctrl-btn" id="pres-next-btn"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+    <button class="ctrl-btn primary" id="pres-reveal-btn">
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      Reveal
+    </button>
+    <button class="ctrl-btn" id="pres-next-btn">
+      <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
     <button class="ctrl-btn" id="pres-tts-btn">
       <svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
     </button>
@@ -99,23 +107,24 @@
   <div id="settings-panel">
     <div class="settings-title">Settings<button class="settings-close" id="settings-close">✕</button></div>
 
+    <!-- Themes -->
     <div class="settings-section">
       <div class="settings-section-label">Theme — Dark</div>
-      <div class="theme-dots">
-        <span class="theme-dot" data-theme="terminal"    style="background:#e7ff00" title="Terminal"></span>
-        <span class="theme-dot" data-theme="amber"       style="background:#ffb300" title="Amber"></span>
-        <span class="theme-dot" data-theme="arctic"      style="background:#4fc3f7" title="Arctic"></span>
-        <span class="theme-dot" data-theme="rose"        style="background:#f48fb1" title="Rose Gold"></span>
-        <span class="theme-dot" data-theme="obsidian"    style="background:#bf5af2" title="Obsidian"></span>
-        <span class="theme-dot" data-theme="dracula"     style="background:#ff79c6" title="Dracula"></span>
-        <span class="theme-dot" data-theme="gruvbox"     style="background:#b8bb26" title="Gruvbox"></span>
-        <span class="theme-dot" data-theme="catppuccin"  style="background:#89b4fa" title="Catppuccin"></span>
-        <span class="theme-dot" data-theme="sonokai"     style="background:#9ed072" title="Sonokai"></span>
-        <span class="theme-dot" data-theme="nord"        style="background:#88c0d0" title="Nord"></span>
-        <span class="theme-dot" data-theme="mocha"       style="background:#e78a4e" title="Mocha"></span>
+      <div class="theme-dots" id="theme-dots-dark">
+        <span class="theme-dot active" data-theme="terminal"    style="background:#e7ff00" title="Terminal"></span>
+        <span class="theme-dot"        data-theme="amber"       style="background:#ffb300" title="Amber"></span>
+        <span class="theme-dot"        data-theme="arctic"      style="background:#4fc3f7" title="Arctic"></span>
+        <span class="theme-dot"        data-theme="rose"        style="background:#f48fb1" title="Rose Gold"></span>
+        <span class="theme-dot"        data-theme="obsidian"    style="background:#bf5af2" title="Obsidian"></span>
+        <span class="theme-dot"        data-theme="dracula"     style="background:#ff79c6" title="Dracula"></span>
+        <span class="theme-dot"        data-theme="gruvbox"     style="background:#b8bb26" title="Gruvbox"></span>
+        <span class="theme-dot"        data-theme="catppuccin"  style="background:#89b4fa" title="Catppuccin"></span>
+        <span class="theme-dot"        data-theme="sonokai"     style="background:#9ed072" title="Sonokai"></span>
+        <span class="theme-dot"        data-theme="nord"        style="background:#88c0d0" title="Nord"></span>
+        <span class="theme-dot"        data-theme="mocha"       style="background:#e78a4e" title="Mocha"></span>
       </div>
       <div class="settings-section-label" style="margin-top:14px">Theme — Light</div>
-      <div class="theme-dots">
+      <div class="theme-dots" id="theme-dots-light">
         <span class="theme-dot" data-theme="ivory"         style="background:#7a3c0e" title="Ivory"></span>
         <span class="theme-dot" data-theme="paper"         style="background:#9c2318" title="Paper"></span>
         <span class="theme-dot" data-theme="latte"         style="background:#1450c8" title="Latte"></span>
@@ -130,12 +139,14 @@
       </div>
     </div>
 
+    <!-- Custom theme -->
     <div class="settings-section">
       <div class="settings-section-label">Custom Theme</div>
       <div class="color-grid" id="color-grid"></div>
       <button class="custom-theme-reset" id="custom-reset">Reset to current theme</button>
     </div>
 
+    <!-- Font size -->
     <div class="settings-section">
       <div class="settings-section-label">FONT SIZE — PRIMARY</div>
       <div class="fs-row">
@@ -153,13 +164,7 @@
       </div>
     </div>
 
-    <div class="settings-section">
-      <div class="settings-section-label">TTS Voice</div>
-      <select class="tts-voice-select" id="tts-voice-select">
-        <option value="">Default</option>
-      </select>
-    </div>
-
+    <!-- Options -->
     <div class="settings-section">
       <div class="settings-section-label">Options</div>
       <div class="toggle-row">
@@ -168,6 +173,7 @@
       </div>
     </div>
 
+    <!-- Shortcuts -->
     <div class="settings-section">
       <div class="settings-section-label">Keyboard Shortcuts</div>
       <div class="key-row"><span class="key-label">Reveal</span><input class="key-input" id="key-reveal-input" value="Space" maxlength="10" readonly/></div>
